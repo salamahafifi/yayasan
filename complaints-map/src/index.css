@@ -13,12 +13,33 @@ body,
 
 .app-header {
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
   padding: 12px 20px;
   background: #fff;
   border-bottom: 1px solid #e5e7eb;
+}
+
+.lang-toggle {
+  display: flex;
+  gap: 4px;
+}
+
+.lang-toggle__btn {
+  padding: 4px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: #fff;
+  color: #374151;
+  font: 600 12px/1 system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.lang-toggle__btn--active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
 }
 
 .app-header__logo {
@@ -48,12 +69,13 @@ body,
   bottom: 12px;
   left: 12px;
   z-index: 1000;
+  box-sizing: border-box;
+  width: min(280px, calc(100% - 24px));
   background: rgba(255, 255, 255, 0.95);
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   padding: 12px 14px;
   font: 13px/1.4 system-ui, sans-serif;
-  max-width: 240px;
 }
 
 .map-overlay__status {
@@ -120,4 +142,57 @@ body,
 
 .ticket-popup__photo:last-child {
   margin-bottom: 0;
+}
+.ticket-lookup {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ticket-lookup__title {
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.ticket-lookup__form {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ticket-lookup__input {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font: inherit;
+}
+
+.ticket-lookup__button {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  background: #2563eb;
+  color: white;
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ticket-lookup__message {
+  margin: 8px 0 0;
+  color: #6b7280;
+}
+
+.ticket-lookup__result {
+  margin-top: 8px;
+  font-size: 0.9em;
+}
+
+.ticket-lookup__result p {
+  margin: 0 0 4px;
 }

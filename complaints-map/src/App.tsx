@@ -1,8 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { supabase } from './lib/supabase';
-import type { IssueCategory, PublicTicket, TicketStatus } from './types/database';
+import { formatDate, groupMappableTickets, isMappable, type TicketGroup } from './lib/format';
+import {
+  STRINGS,
+  formatCategoryLabel,
+  formatComplainants,
+  formatStatusLabel,
+  type Lang,
+} from './lib/i18n';
+import TicketLookup from './components/TicketLookup';
+import type { IssueCategory, PublicTicket } from './types/database';
 
 const MAP_CENTER: [number, number] = [1.4236, 103.6500];
 const MAP_ZOOM = 15;
@@ -16,38 +25,13 @@ const CATEGORY_COLORS: Record<IssueCategory, string> = {
   lain_lain: '#6b7280',
 };
 
-const STATUS_LABELS: Record<TicketStatus, string> = {
-  baru: 'Baru',
-  siasat: 'Siasatan',
-  majlis_perbandaran: 'Majlis Perbandaran',
-  selesai: 'Selesai',
-  tangguh: 'Tangguh',
-};
-
-type MappableTicket = PublicTicket & { latitude: number; longitude: number };
-
-function isMappable(ticket: PublicTicket): ticket is MappableTicket {
-  return ticket.latitude != null && ticket.longitude != null;
-}
-
-function formatCategory(category: string): string {
-  return category
-    .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
-
-function formatDate(iso: string): string {
-  return new Intl.DateTimeFormat('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(new Date(iso));
-}
-
-function formatComplainants(count: number): string {
-  return count === 1 ? 'Reported by 1 person' : `Reported by ${count} people`;
-}
+const LEGEND_CATEGORIES: IssueCategory[] = [
+  'jalan_berlubang',
+  'banjir',
+  'lampu_jalan',
+  'sampah',
+  'lain_lain',
+];
 
 function MapResizeHandler() {
   const map = useMap();
@@ -67,30 +51,37 @@ function MapResizeHandler() {
   return null;
 }
 
-function TicketPopup({ ticket }: { ticket: MappableTicket }) {
+function markerRadius(complainantCount: number): number {
+  if (complainantCount <= 1) return 8;
+  return Math.min(8 + complainantCount * 2, 18);
+}
+
+function TicketPopup({ group, lang }: { group: TicketGroup; lang: Lang }) {
+  const t = STRINGS[lang];
+
   return (
     <div className="ticket-popup">
       <p>
-        <strong>Type of Complaint:</strong> {formatCategory(ticket.category)}
+        <strong>{t.typeOfComplaint}:</strong> {formatCategoryLabel(group.category, lang)}
       </p>
       <p>
-        <strong>First Date Complained:</strong> {formatDate(ticket.created_at)}
+        <strong>{t.firstDate}:</strong> {formatDate(group.firstReportedAt)}
       </p>
       <p>
-        <strong>Latest Date Complained:</strong> {formatDate(ticket.updated_at)}
+        <strong>{t.latestDate}:</strong> {formatDate(group.latestReportedAt)}
       </p>
       <p>
-        <strong>Status:</strong> {STATUS_LABELS[ticket.status]}
+        <strong>{t.status}:</strong> {formatStatusLabel(group.status, lang)}
       </p>
       <p>
-        <strong>Number of Complainants:</strong> {formatComplainants(ticket.upvote_count)}
+        <strong>{t.complainants}:</strong> {formatComplainants(group.complainantCount, lang)}
       </p>
-      {ticket.photo_urls.length > 0 && (
+      {group.photos.length > 0 && (
         <div className="ticket-popup__photos">
           <p className="ticket-popup__photos-label">
-            <strong>Photos shared:</strong>
+            <strong>{t.photosShared}:</strong>
           </p>
-          {ticket.photo_urls.map((url, index) => (
+          {group.photos.map((url, index) => (
             <img
               key={`${url}-${index}`}
               src={url}
@@ -105,9 +96,17 @@ function TicketPopup({ ticket }: { ticket: MappableTicket }) {
 }
 
 function App() {
-  const [tickets, setTickets] = useState<MappableTicket[]>([]);
+  const [lang, setLang] = useState<Lang>('en');
+  const [tickets, setTickets] = useState<PublicTicket[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const groups = useMemo(
+    () => groupMappableTickets(tickets.filter(isMappable)),
+    [tickets],
+  );
+
+  const t = STRINGS[lang];
 
   useEffect(() => {
     let cancelled = false;
@@ -126,7 +125,7 @@ function App() {
         setTickets([]);
       } else {
         setError(null);
-        setTickets(((data ?? []) as PublicTicket[]).filter(isMappable));
+        setTickets((data ?? []) as PublicTicket[]);
       }
 
       setLoading(false);
@@ -143,6 +142,22 @@ function App() {
     <div className="app">
       <header className="app-header">
         <div className="app-header__logo">Salamahafifi</div>
+        <div className="lang-toggle" role="group" aria-label="Language">
+          <button
+            type="button"
+            className={`lang-toggle__btn${lang === 'en' ? ' lang-toggle__btn--active' : ''}`}
+            onClick={() => setLang('en')}
+          >
+            EN
+          </button>
+          <button
+            type="button"
+            className={`lang-toggle__btn${lang === 'ms' ? ' lang-toggle__btn--active' : ''}`}
+            onClick={() => setLang('ms')}
+          >
+            BM
+          </button>
+        </div>
       </header>
 
       <main className="app-main">
@@ -157,20 +172,20 @@ function App() {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             />
-            {tickets.map((ticket) => (
+            {groups.map((group) => (
               <CircleMarker
-                key={ticket.id}
-                center={[ticket.latitude, ticket.longitude]}
-                radius={ticket.upvote_count > 1 ? 10 : 8}
+                key={group.key}
+                center={[group.latitude, group.longitude]}
+                radius={markerRadius(group.complainantCount)}
                 pathOptions={{
-                  color: CATEGORY_COLORS[ticket.category],
-                  fillColor: CATEGORY_COLORS[ticket.category],
+                  color: CATEGORY_COLORS[group.category],
+                  fillColor: CATEGORY_COLORS[group.category],
                   fillOpacity: 0.85,
                   weight: 2,
                 }}
               >
                 <Popup>
-                  <TicketPopup ticket={ticket} />
+                  <TicketPopup group={group} lang={lang} />
                 </Popup>
               </CircleMarker>
             ))}
@@ -178,20 +193,21 @@ function App() {
         </div>
 
         <div className="map-overlay">
-          {loading && <p className="map-overlay__status">Memuatkan aduan…</p>}
+          <TicketLookup lang={lang} />
+          {loading && <p className="map-overlay__status">{t.loading}</p>}
           {error && <p className="map-overlay__error">{error}</p>}
           {!loading && !error && (
-            <p className="map-overlay__status">{tickets.length} aduan dipaparkan</p>
+            <p className="map-overlay__status">{t.locationsShown(groups.length)}</p>
           )}
-          <p className="map-legend__title">Type of Complaint</p>
+          <p className="map-legend__title">{t.legendTitle}</p>
           <ul className="map-legend">
-            {(Object.keys(CATEGORY_COLORS) as IssueCategory[]).map((category) => (
+            {LEGEND_CATEGORIES.map((category) => (
               <li key={category}>
                 <span
                   className="map-legend__swatch"
                   style={{ backgroundColor: CATEGORY_COLORS[category] }}
                 />
-                {formatCategory(category)}
+                {formatCategoryLabel(category, lang)}
               </li>
             ))}
           </ul>

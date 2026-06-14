@@ -22,5 +22,6 @@ export type PublicTicket = {
   upvote_count: number;
   created_at: string;
   updated_at: string;
-  photo_urls: string[];
+  photo_url: string | null;
+  photo_urls?: string[];
 };
