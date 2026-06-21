@@ -11,6 +11,7 @@ import {
   type Lang,
 } from './lib/i18n';
 import TicketLookup from './components/TicketLookup';
+import PhotoGallery from './components/PhotoGallery';
 import type { IssueCategory, PublicTicket } from './types/database';
 
 const MAP_CENTER: [number, number] = [1.4236, 103.6500];
@@ -77,19 +78,7 @@ function TicketPopup({ group, lang }: { group: TicketGroup; lang: Lang }) {
         <strong>{t.complainants}:</strong> {formatComplainants(group.complainantCount, lang)}
       </p>
       {group.photos.length > 0 && (
-        <div className="ticket-popup__photos">
-          <p className="ticket-popup__photos-label">
-            <strong>{t.photosShared}:</strong>
-          </p>
-          {group.photos.map((url, index) => (
-            <img
-              key={`${url}-${index}`}
-              src={url}
-              alt={`Complaint photo ${index + 1}`}
-              className="ticket-popup__photo"
-            />
-          ))}
-        </div>
+        <PhotoGallery photos={group.photos} label={t.photosShared} lang={lang} />
       )}
     </div>
   );

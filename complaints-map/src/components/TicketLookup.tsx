@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { supabase } from '../lib/supabase';
 import { formatDate, getTicketPhotos } from '../lib/format';
 import { STRINGS, formatCategoryLabel, formatComplainants, formatStatusLabel, type Lang } from '../lib/i18n';
+import PhotoGallery from './PhotoGallery';
 import type { PublicTicket } from '../types/database';
 
 type LookupState = 'idle' | 'loading' | 'found' | 'not_found' | 'error';
@@ -83,14 +84,7 @@ function TicketLookup({ lang }: TicketLookupProps) {
             <strong>{t.complainants}:</strong> {formatComplainants(ticket.upvote_count, lang)}
           </p>
           {photos.length > 0 && (
-            <div className="ticket-popup__photos">
-              <p className="ticket-popup__photos-label">
-                <strong>{t.photosShared}:</strong>
-              </p>
-              {photos.map((url, i) => (
-                <img key={`${url}-${i}`} src={url} alt={`Complaint photo ${i + 1}`} className="ticket-popup__photo" />
-              ))}
-            </div>
+            <PhotoGallery photos={photos} label={t.photosShared} lang={lang} />
           )}
         </div>
       )}

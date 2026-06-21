@@ -17,6 +17,10 @@ export const STRINGS: Record<
     latestDate: string;
     complainants: string;
     photosShared: string;
+    galleryPrev: string;
+    galleryNext: string;
+    galleryClose: string;
+    galleryCounter: (current: number, total: number) => string;
     reportedByOne: string;
     reportedByMany: (count: number) => string;
     statusLabels: Record<string, string>;
@@ -38,6 +42,10 @@ export const STRINGS: Record<
     latestDate: 'Latest Date Complained',
     complainants: 'Number of Complainants',
     photosShared: 'Photos shared',
+    galleryPrev: 'Previous',
+    galleryNext: 'Next',
+    galleryClose: 'Close',
+    galleryCounter: (current, total) => `${current} / ${total}`,
     reportedByOne: 'Reported by 1 person',
     reportedByMany: (count) => `Reported by ${count} people`,
     statusLabels: {
@@ -71,6 +79,10 @@ export const STRINGS: Record<
     latestDate: 'Tarikh Aduan Terkini',
     complainants: 'Bilangan Pengadu',
     photosShared: 'Foto dikongsi',
+    galleryPrev: 'Sebelum',
+    galleryNext: 'Seterusnya',
+    galleryClose: 'Tutup',
+    galleryCounter: (current, total) => `${current} / ${total}`,
     reportedByOne: 'Dilaporkan oleh 1 orang',
     reportedByMany: (count) => `Dilaporkan oleh ${count} orang`,
     statusLabels: {
