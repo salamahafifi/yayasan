@@ -14,8 +14,13 @@ import TicketLookup from './components/TicketLookup';
 import PhotoGallery from './components/PhotoGallery';
 import type { IssueCategory, PublicTicket } from './types/database';
 
-const MAP_CENTER: [number, number] = [1.4236, 103.6500];
-const MAP_ZOOM = 15;
+// Kempas DUN (N47) — Wikipedia centroid 1°31′41″N 103°42′18″E
+const MAP_CENTER: [number, number] = [1.528, 103.705];
+const MAP_ZOOM = 14;
+const MAP_MAX_BOUNDS: [[number, number], [number, number]] = [
+  [1.485, 103.660],
+  [1.570, 103.735],
+];
 
 const CATEGORY_COLORS: Record<IssueCategory, string> = {
   jalan_berlubang: '#dc2626',
@@ -85,7 +90,7 @@ function TicketPopup({ group, lang }: { group: TicketGroup; lang: Lang }) {
 }
 
 function App() {
-  const [lang, setLang] = useState<Lang>('en');
+  const [lang, setLang] = useState<Lang>('ms');
   const [tickets, setTickets] = useState<PublicTicket[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -130,7 +135,7 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <div className="app-header__logo">Salamahafifi</div>
+        <div className="app-header__logo">SALAMAHAFIFI (FIFI) - CALON 03 N47 KEMPAS</div>
         <div className="lang-toggle" role="group" aria-label="Language">
           <button
             type="button"
@@ -154,6 +159,9 @@ function App() {
           <MapContainer
             center={MAP_CENTER}
             zoom={MAP_ZOOM}
+            minZoom={13}
+            maxBounds={MAP_MAX_BOUNDS}
+            maxBoundsViscosity={1.0}
             style={{ height: '100%', width: '100%' }}
           >
             <MapResizeHandler />

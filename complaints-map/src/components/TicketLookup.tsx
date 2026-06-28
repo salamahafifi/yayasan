@@ -52,7 +52,7 @@ function TicketLookup({ lang }: TicketLookupProps) {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="ADUN-2606-0001"
+          placeholder="N47-2606-0001"
           className="ticket-lookup__input"
         />
         <button type="submit" className="ticket-lookup__button">

@@ -1,0 +1,12 @@
+{
+  "name": "complaints-site",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix complaints-map",
+    "dev:map": "npm run dev --prefix complaints-map",
+    "dev:admin": "npm run dev --prefix admin-dashboard",
+    "build": "npm run build --prefix complaints-map",
+    "build:map": "npm run build --prefix complaints-map",
+    "build:admin": "npm run build --prefix admin-dashboard"
+  }
+}

@@ -15,39 +15,44 @@ body,
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   flex-shrink: 0;
-  padding: 12px 20px;
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 10px 20px;
+  background: #ffd100;
+  border-bottom: 3px solid #003b8e;
 }
 
 .lang-toggle {
   display: flex;
+  flex-shrink: 0;
   gap: 4px;
 }
 
 .lang-toggle__btn {
   padding: 4px 10px;
-  border: 1px solid #d1d5db;
+  border: 2px solid #003b8e;
   border-radius: 4px;
-  background: #fff;
-  color: #374151;
-  font: 600 12px/1 system-ui, sans-serif;
+  background: #ffd100;
+  color: #003b8e;
+  font: 700 12px/1 'Barlow Condensed', system-ui, sans-serif;
+  letter-spacing: 0.04em;
   cursor: pointer;
 }
 
 .lang-toggle__btn--active {
-  background: #2563eb;
-  border-color: #2563eb;
-  color: #fff;
+  background: #003b8e;
+  border-color: #003b8e;
+  color: #ffd100;
 }
 
 .app-header__logo {
-  color: #111827;
-  font-family: 'Rouge Script', cursive;
-  font-size: 2.25rem;
-  font-weight: 400;
-  line-height: 1;
+  color: #003b8e;
+  font-family: 'Barlow Condensed', system-ui, sans-serif;
+  font-size: clamp(0.95rem, 2.4vw, 1.5rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.15;
+  text-transform: uppercase;
 }
 
 .app-main {
