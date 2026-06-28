@@ -12,6 +12,7 @@ import {
 } from './lib/i18n';
 import TicketLookup from './components/TicketLookup';
 import PhotoGallery from './components/PhotoGallery';
+import KempasBoundary from './components/KempasBoundary';
 import type { IssueCategory, PublicTicket } from './types/database';
 
 // Kempas DUN (N47) — Wikipedia centroid 1°31′41″N 103°42′18″E
@@ -19,7 +20,7 @@ const MAP_CENTER: [number, number] = [1.528, 103.705];
 const MAP_ZOOM = 14;
 const MAP_MAX_BOUNDS: [[number, number], [number, number]] = [
   [1.485, 103.660],
-  [1.570, 103.735],
+  [1.570, 103.750],
 ];
 
 const CATEGORY_COLORS: Record<IssueCategory, string> = {
@@ -169,6 +170,7 @@ function App() {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             />
+            <KempasBoundary />
             {groups.map((group) => (
               <CircleMarker
                 key={group.key}
