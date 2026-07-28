@@ -1,14 +1,13 @@
 import type { FeatureCollection } from 'geojson';
 
-// Source: DOSM open geodata (electoral_1_dun.geojson), N.47 Kempas, Johor
-export const kempasDunBoundary: FeatureCollection = {
+// Source: DOSM open geodata (electoral_1_dun.geojson)
+export const dunBoundary: FeatureCollection = {
   type: 'FeatureCollection',
   features: [
     {
       type: 'Feature',
       properties: {
-        dun: 'N.47 Kempas',
-        code_dun: 'N.47',
+        code: 'N.47',
       },
       geometry: {
         type: 'MultiPolygon',

@@ -21,6 +21,8 @@ export const STRINGS: Record<
     galleryNext: string;
     galleryClose: string;
     galleryCounter: (current: number, total: number) => string;
+    hidePanel: string;
+    showPanel: string;
     reportedByOne: string;
     reportedByMany: (count: number) => string;
     statusLabels: Record<string, string>;
@@ -46,6 +48,8 @@ export const STRINGS: Record<
     galleryNext: 'Next',
     galleryClose: 'Close',
     galleryCounter: (current, total) => `${current} / ${total}`,
+    hidePanel: 'Hide',
+    showPanel: 'Show panel',
     reportedByOne: 'Reported by 1 person',
     reportedByMany: (count) => `Reported by ${count} people`,
     statusLabels: {
@@ -83,6 +87,8 @@ export const STRINGS: Record<
     galleryNext: 'Seterusnya',
     galleryClose: 'Tutup',
     galleryCounter: (current, total) => `${current} / ${total}`,
+    hidePanel: 'Sembunyi',
+    showPanel: 'Tunjuk panel',
     reportedByOne: 'Dilaporkan oleh 1 orang',
     reportedByMany: (count) => `Dilaporkan oleh ${count} orang`,
     statusLabels: {

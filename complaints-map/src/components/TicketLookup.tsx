@@ -25,7 +25,9 @@ function TicketLookup({ lang }: TicketLookupProps) {
     setState('loading');
     const { data, error } = await supabase
       .from('public_tickets')
-      .select('*')
+      .select(
+        'id, ticket_number, category, description, status, latitude, longitude, parent_ticket_id, upvote_count, created_at, updated_at, photo_url',
+      )
       .eq('ticket_number', ticketNumber)
       .maybeSingle();
 
@@ -52,7 +54,7 @@ function TicketLookup({ lang }: TicketLookupProps) {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="N47-2606-0001"
+          placeholder="ADU-2607-0001"
           className="ticket-lookup__input"
         />
         <button type="submit" className="ticket-lookup__button">

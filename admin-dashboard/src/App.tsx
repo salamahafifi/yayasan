@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
+import AdminMap from './components/AdminMap';
 import LoginForm from './components/LoginForm';
 import { supabase } from './lib/supabase';
+import TicketTable from './components/TicketTable';
 
 function Dashboard({ email, onSignOut }: { email: string; onSignOut: () => void }) {
   return (
     <div className="dashboard">
       <header className="dashboard__header">
-        <h1 className="dashboard__title">ADUN Admin Dashboard</h1>
+        <h1 className="dashboard__title">Panel Staf</h1>
         <div className="dashboard__user">
           <span>{email}</span>
           <button type="button" className="dashboard__sign-out" onClick={onSignOut}>
@@ -16,7 +18,8 @@ function Dashboard({ email, onSignOut }: { email: string; onSignOut: () => void 
         </div>
       </header>
       <main className="dashboard__main">
-        <p>Ticket management UI coming in Phase 3.</p>
+        <TicketTable />
+        <AdminMap />
       </main>
     </div>
   );

@@ -21,7 +21,7 @@ function LoginForm() {
   return (
     <div className="login">
       <form onSubmit={handleSubmit} className="login__form">
-        <h1 className="login__title">ADUN Staff Login</h1>
+        <h1 className="login__title">Log Masuk Staf</h1>
         <label className="login__label">
           Email
           <input

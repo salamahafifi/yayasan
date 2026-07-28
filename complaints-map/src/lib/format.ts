@@ -46,7 +46,6 @@ export function formatComplainants(count: number): string {
 }
 
 export function getTicketPhotos(ticket: PublicTicket): string[] {
-  if (ticket.photo_urls?.length) return ticket.photo_urls;
   if (ticket.photo_url) return [ticket.photo_url];
   return [];
 }

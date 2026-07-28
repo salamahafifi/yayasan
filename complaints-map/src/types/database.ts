@@ -14,14 +14,11 @@ export type PublicTicket = {
   category: IssueCategory;
   description: string;
   status: TicketStatus;
-  adun_priority: string;
   latitude: number | null;
   longitude: number | null;
-  address_text: string | null;
   parent_ticket_id: number | null;
   upvote_count: number;
   created_at: string;
   updated_at: string;
   photo_url: string | null;
-  photo_urls?: string[];
 };

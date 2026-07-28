@@ -62,7 +62,7 @@ html, body, #root {
   padding: 10px;
   border: none;
   border-radius: 4px;
-  background: #2563eb;
+  background: #1B4332;
   color: white;
   font-size: 1rem;
   cursor: pointer;
@@ -106,4 +106,89 @@ html, body, #root {
 
 .dashboard__main {
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.admin-map {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-map__title {
+  margin: 0;
+  font-size: 1rem;
+  color: #1A1D20;
+}
+
+.admin-map__canvas {
+  height: 420px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ticket-table-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ticket-table__filters {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 0.9rem;
+}
+
+.ticket-table__filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #374151;
+}
+
+.ticket-table__filters select {
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+}
+
+.ticket-table__count {
+  margin-left: auto;
+  color: #6b7280;
+}
+
+.ticket-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  background: white;
+}
+
+.ticket-table th,
+.ticket-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.ticket-table th {
+  background: #f9fafb;
+  font-weight: 600;
+}
+
+.ticket-table__phone {
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
+.status-text {
+  color: #6b7280;
+}
+
+.status-text--error {
+  color: #b91c1c;
 }

@@ -12,15 +12,21 @@ import {
 } from './lib/i18n';
 import TicketLookup from './components/TicketLookup';
 import PhotoGallery from './components/PhotoGallery';
-import KempasBoundary from './components/KempasBoundary';
 import type { IssueCategory, PublicTicket } from './types/database';
 
-// Kempas DUN (N47) — Wikipedia centroid 1°31′41″N 103°42′18″E
-const MAP_CENTER: [number, number] = [1.528, 103.705];
-const MAP_ZOOM = 14;
+const PUBLIC_TICKET_COLUMNS =
+  'id, ticket_number, category, description, status, latitude, longitude, parent_ticket_id, upvote_count, created_at, updated_at, photo_url';
+
+// Initial viewport: Taman Perling (SW) through Kempas (NE) — bounds only, no overlay
+const MAP_CENTER: [number, number] = [1.508, 103.702];
+const MAP_ZOOM = 13;
+const MAP_BOUNDS: [[number, number], [number, number]] = [
+  [1.47, 103.655],
+  [1.545, 103.745],
+];
 const MAP_MAX_BOUNDS: [[number, number], [number, number]] = [
-  [1.485, 103.660],
-  [1.570, 103.750],
+  [1.45, 103.63],
+  [1.565, 103.76],
 ];
 
 const CATEGORY_COLORS: Record<IssueCategory, string> = {
@@ -95,6 +101,7 @@ function App() {
   const [tickets, setTickets] = useState<PublicTicket[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(true);
 
   const groups = useMemo(
     () => groupMappableTickets(tickets.filter(isMappable)),
@@ -109,7 +116,7 @@ function App() {
     async function loadTickets() {
       const { data, error: fetchError } = await supabase
         .from('public_tickets')
-        .select('*')
+        .select(PUBLIC_TICKET_COLUMNS)
         .not('latitude', 'is', null)
         .not('longitude', 'is', null);
 
@@ -136,7 +143,10 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <div className="app-header__logo">SALAMAHAFIFI (FIFI) - CALON 03 N47 KEMPAS</div>
+        <div className="app-header__brand">
+          <div className="app-header__title">Peta Aduan Komuniti</div>
+          <div className="app-header__subtitle">Satu perkhidmatan Salamahafifi Solutions</div>
+        </div>
         <div className="lang-toggle" role="group" aria-label="Language">
           <button
             type="button"
@@ -160,7 +170,8 @@ function App() {
           <MapContainer
             center={MAP_CENTER}
             zoom={MAP_ZOOM}
-            minZoom={13}
+            bounds={MAP_BOUNDS}
+            minZoom={12}
             maxBounds={MAP_MAX_BOUNDS}
             maxBoundsViscosity={1.0}
             style={{ height: '100%', width: '100%' }}
@@ -170,7 +181,6 @@ function App() {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             />
-            <KempasBoundary />
             {groups.map((group) => (
               <CircleMarker
                 key={group.key}
@@ -191,26 +201,51 @@ function App() {
           </MapContainer>
         </div>
 
-        <div className="map-overlay">
-          <TicketLookup lang={lang} />
-          {loading && <p className="map-overlay__status">{t.loading}</p>}
-          {error && <p className="map-overlay__error">{error}</p>}
-          {!loading && !error && (
-            <p className="map-overlay__status">{t.locationsShown(groups.length)}</p>
-          )}
-          <p className="map-legend__title">{t.legendTitle}</p>
-          <ul className="map-legend">
-            {LEGEND_CATEGORIES.map((category) => (
-              <li key={category}>
-                <span
-                  className="map-legend__swatch"
-                  style={{ backgroundColor: CATEGORY_COLORS[category] }}
-                />
-                {formatCategoryLabel(category, lang)}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {panelOpen ? (
+          <div className="map-overlay">
+            <div className="map-overlay__toolbar">
+              <button
+                type="button"
+                className="map-overlay__toggle"
+                onClick={() => setPanelOpen(false)}
+                aria-label={t.hidePanel}
+                aria-expanded={true}
+                title={t.hidePanel}
+              >
+                −
+              </button>
+            </div>
+            <TicketLookup lang={lang} />
+            {loading && <p className="map-overlay__status">{t.loading}</p>}
+            {error && <p className="map-overlay__error">{error}</p>}
+            {!loading && !error && (
+              <p className="map-overlay__status">{t.locationsShown(groups.length)}</p>
+            )}
+            <p className="map-legend__title">{t.legendTitle}</p>
+            <ul className="map-legend">
+              {LEGEND_CATEGORIES.map((category) => (
+                <li key={category}>
+                  <span
+                    className="map-legend__swatch"
+                    style={{ backgroundColor: CATEGORY_COLORS[category] }}
+                  />
+                  {formatCategoryLabel(category, lang)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="map-overlay-reopen"
+            onClick={() => setPanelOpen(true)}
+            aria-label={t.showPanel}
+            aria-expanded={false}
+            title={t.showPanel}
+          >
+            +
+          </button>
+        )}
       </main>
     </div>
   );

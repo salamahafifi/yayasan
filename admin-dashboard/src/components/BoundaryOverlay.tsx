@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { GeoJSON, useMap } from 'react-leaflet';
 import type { GeoJSON as LeafletGeoJSON, PathOptions } from 'leaflet';
-import { kempasDunBoundary } from '../data/kempas-dun';
+import { dunBoundary } from '../data/dun-boundary';
 
-export const BERSAMA_YELLOW = '#ffd100';
+/** Matches sahkan.my --color-brand-primary */
+export const BOUNDARY_COLOR = '#1B4332';
 
 function boundaryWeight(zoom: number): number {
   return Math.min(10, Math.max(5, zoom - 7));
@@ -11,7 +12,7 @@ function boundaryWeight(zoom: number): number {
 
 function boundaryStyle(zoom: number): PathOptions {
   return {
-    color: BERSAMA_YELLOW,
+    color: BOUNDARY_COLOR,
     weight: boundaryWeight(zoom),
     opacity: 1,
     fill: false,
@@ -20,7 +21,7 @@ function boundaryStyle(zoom: number): PathOptions {
   };
 }
 
-function KempasBoundary() {
+function BoundaryOverlay() {
   const map = useMap();
   const layerRef = useRef<LeafletGeoJSON | null>(null);
 
@@ -40,10 +41,10 @@ function KempasBoundary() {
   return (
     <GeoJSON
       ref={layerRef}
-      data={kempasDunBoundary}
+      data={dunBoundary}
       pathOptions={boundaryStyle(map.getZoom())}
     />
   );
 }
 
-export default KempasBoundary;
+export default BoundaryOverlay;
