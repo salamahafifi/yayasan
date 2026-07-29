@@ -247,6 +247,17 @@ function App() {
           </button>
         )}
       </main>
+
+      <footer className="app-footer">
+        <nav className="app-footer__links" aria-label="Legal">
+          <a href="/privacy">Dasar Privasi</a>
+          <a href="/terms">Terma Perkhidmatan</a>
+          <a href="/data-deletion">Padam Data Saya</a>
+        </nav>
+        <p className="app-footer__meta">
+          Salamahafifi Solutions · SSM 202603191790 (PG0590830-U) · admin@sahkan.my
+        </p>
+      </footer>
     </div>
   );
 }
