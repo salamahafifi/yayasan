@@ -15,6 +15,7 @@ export const STRINGS: Record<
     status: string;
     firstDate: string;
     latestDate: string;
+    daysOutstanding: string;
     complainants: string;
     photosShared: string;
     galleryPrev: string;
@@ -40,8 +41,9 @@ export const STRINGS: Record<
     ticket: 'Ticket',
     typeOfComplaint: 'Jenis Aduan',
     status: 'Status',
-    firstDate: 'First Date Complained',
+    firstDate: 'First reported to agency',
     latestDate: 'Latest Date Complained',
+    daysOutstanding: 'Days outstanding',
     complainants: 'Number of Complainants',
     photosShared: 'Photos shared',
     galleryPrev: 'Previous',
@@ -79,8 +81,9 @@ export const STRINGS: Record<
     ticket: 'Tiket',
     typeOfComplaint: 'Jenis Aduan',
     status: 'Status',
-    firstDate: 'Tarikh Aduan Pertama',
+    firstDate: 'Tarikh lapor kepada agensi',
     latestDate: 'Tarikh Aduan Terkini',
+    daysOutstanding: 'Hari sejak lapor',
     complainants: 'Bilangan Pengadu',
     photosShared: 'Foto dikongsi',
     galleryPrev: 'Sebelum',

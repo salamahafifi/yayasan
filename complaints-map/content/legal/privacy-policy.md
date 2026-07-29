@@ -72,30 +72,30 @@ If you contact us on WhatsApp, you are choosing to start that conversation. We w
 
 ## 6. What we publish, and what we never publish
 
-Some case information is shown on a public map and in public summaries, so that residents can see which problems have been reported in an area, which agency they went to, and how long they have gone unanswered.
+When you submit a case, it appears on our public map. The purpose of that map is to show how many people have reported a problem in a given place and how long it has gone unanswered. It is not to publish your report.
 
-**We may publish:**
+**We publish only:**
 
 - The general location of the problem, rounded to street level rather than an exact address
 - The category of the problem
-- The name of the agency the case was reported to
-- The reference number the agency issued
-- The date it was reported to the agency, and the number of days it has been outstanding
+- The name of the agency it was reported to
+- The date it was first reported to that agency, and the number of days it has been outstanding
+- How many people have reported the same problem
 - The current status
-- A description of the problem, edited to remove anything identifying
-- Photographs of the problem itself, with faces, vehicle registration plates and house numbers obscured
+- Photographs of the problem itself, but only after a member of our staff has reviewed each one and confirmed that faces, vehicle registration plates, house numbers and any other identifying detail are not visible. Photographs are never published automatically.
 
 **We never publish:**
 
 - Your name
 - Your telephone number, WhatsApp number or email address
-- Your exact home address
+- Your exact address or exact coordinates
+- The reference number the agency issued you
+- The text of what you wrote to us
+- Your Sahkan case number, which is sent only to you
 - Any photograph in which you or your household are identifiable
-- The content of your private correspondence with us
+- The content of your correspondence with us
 
-**About the reference number.** Publishing it is what makes a case checkable rather than a mere claim. It is not by itself personal data, but an agency holding that reference could use it to look up who filed the original complaint. We want you to know that before you agree to it.
-
-If you would prefer that your case is not shown publicly, or that the reference number is withheld, tell us when you submit or at any time afterwards, and we will honour it.
+If you would prefer that your case does not appear on the map at all, tell us when you submit or at any time afterwards, and we will remove it. Your case will still be followed up.
 
 ## 7. Who we share your data with
 

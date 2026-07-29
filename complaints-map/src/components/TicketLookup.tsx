@@ -1,9 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { supabase } from '../lib/supabase';
-import { formatDate, getTicketPhotos } from '../lib/format';
-import { STRINGS, formatCategoryLabel, formatComplainants, formatStatusLabel, type Lang } from '../lib/i18n';
-import PhotoGallery from './PhotoGallery';
-import type { PublicTicket } from '../types/database';
+import { formatDateOrDash } from '../lib/format';
+import { STRINGS, formatCategoryLabel, formatStatusLabel, type Lang } from '../lib/i18n';
+import type { TicketStatusResult } from '../types/database';
 
 type LookupState = 'idle' | 'loading' | 'found' | 'not_found' | 'error';
 
@@ -14,7 +13,8 @@ type TicketLookupProps = {
 function TicketLookup({ lang }: TicketLookupProps) {
   const [input, setInput] = useState('');
   const [state, setState] = useState<LookupState>('idle');
-  const [ticket, setTicket] = useState<PublicTicket | null>(null);
+  const [result, setResult] = useState<TicketStatusResult | null>(null);
+  const [queriedNumber, setQueriedNumber] = useState('');
   const t = STRINGS[lang];
 
   async function handleSearch(e: FormEvent) {
@@ -23,28 +23,28 @@ function TicketLookup({ lang }: TicketLookupProps) {
     if (!ticketNumber) return;
 
     setState('loading');
-    const { data, error } = await supabase
-      .from('public_tickets')
-      .select(
-        'id, ticket_number, category, description, status, latitude, longitude, parent_ticket_id, upvote_count, created_at, updated_at, photo_url',
-      )
-      .eq('ticket_number', ticketNumber)
-      .maybeSingle();
+    setQueriedNumber(ticketNumber);
+
+    const { data, error } = await supabase.rpc('get_ticket_status', {
+      p_ticket_number: ticketNumber,
+    });
 
     if (error) {
       setState('error');
+      setResult(null);
       return;
     }
-    if (!data) {
-      setTicket(null);
+
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) {
+      setResult(null);
       setState('not_found');
       return;
     }
-    setTicket(data as PublicTicket);
+
+    setResult(row as TicketStatusResult);
     setState('found');
   }
-
-  const photos = ticket ? getTicketPhotos(ticket) : [];
 
   return (
     <div className="ticket-lookup">
@@ -65,29 +65,24 @@ function TicketLookup({ lang }: TicketLookupProps) {
       {state === 'not_found' && <p className="ticket-lookup__message">{t.notFound}</p>}
       {state === 'error' && <p className="ticket-lookup__message">{t.error}</p>}
 
-      {state === 'found' && ticket && (
+      {state === 'found' && result && (
         <div className="ticket-lookup__result">
           <p>
-            <strong>{t.ticket}:</strong> {ticket.ticket_number}
+            <strong>{t.ticket}:</strong> {queriedNumber}
           </p>
           <p>
-            <strong>{t.typeOfComplaint}:</strong> {formatCategoryLabel(ticket.category, lang)}
+            <strong>{t.typeOfComplaint}:</strong> {formatCategoryLabel(result.category, lang)}
           </p>
           <p>
-            <strong>{t.status}:</strong> {formatStatusLabel(ticket.status, lang)}
+            <strong>{t.status}:</strong> {formatStatusLabel(result.status, lang)}
           </p>
           <p>
-            <strong>{t.firstDate}:</strong> {formatDate(ticket.created_at)}
+            <strong>{t.firstDate}:</strong> {formatDateOrDash(result.first_reported_at)}
           </p>
           <p>
-            <strong>{t.latestDate}:</strong> {formatDate(ticket.updated_at)}
+            <strong>{t.daysOutstanding}:</strong>{' '}
+            {result.days_outstanding == null ? '—' : result.days_outstanding}
           </p>
-          <p>
-            <strong>{t.complainants}:</strong> {formatComplainants(ticket.upvote_count, lang)}
-          </p>
-          {photos.length > 0 && (
-            <PhotoGallery photos={photos} label={t.photosShared} lang={lang} />
-          )}
         </div>
       )}
     </div>

@@ -223,6 +223,13 @@ html, body, #root {
   font-size: 0.8rem;
 }
 
+.ticket-table__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
 .status-text {
   color: #6b7280;
 }

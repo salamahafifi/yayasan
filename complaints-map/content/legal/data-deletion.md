@@ -59,7 +59,7 @@ We will keep the following, and we want to be clear about it:
 - If your case is still open, deleting your data means we can no longer follow up with the agency or update you, and the case will be closed.
 - Deletion is permanent. We cannot restore data once it is gone.
 - If you only want to stop receiving messages, you do not need to delete everything. Reply **STOP** or **BERHENTI** on WhatsApp instead, and your case stays open.
-- If you only want your case taken off the public map, or the reference number withheld, ask for that instead. Message us and we will do it while keeping the case active.
+- If you only want your case taken off the public map, ask for that instead. Message us and we will remove the pin while keeping the case active and still following it up.
 
 ## Contact
 

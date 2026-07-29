@@ -8,11 +8,13 @@ export function isMappable(ticket: PublicTicket): ticket is MappableTicket {
 
 export type TicketGroup = {
   key: string;
+  ticketId: number;
   category: IssueCategory;
   latitude: number;
   longitude: number;
-  firstReportedAt: string;
-  latestReportedAt: string;
+  agency: string | null;
+  firstReportedAt: string | null;
+  daysOutstanding: number | null;
   status: TicketStatus;
   complainantCount: number;
   photos: string[];
@@ -38,23 +40,27 @@ export function formatDate(iso: string): string {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-  }).format(new Date(iso));
+  }).format(new Date(iso.length === 10 ? `${iso}T00:00:00` : iso));
+}
+
+export function formatDateOrDash(iso: string | null | undefined): string {
+  if (!iso) return '—';
+  return formatDate(iso);
 }
 
 export function formatComplainants(count: number): string {
   return count === 1 ? 'Reported by 1 person' : `Reported by ${count} people`;
 }
 
-export function getTicketPhotos(ticket: PublicTicket): string[] {
-  if (ticket.photo_url) return [ticket.photo_url];
-  return [];
-}
-
 function locationCategoryKey(ticket: MappableTicket): string {
-  return `${ticket.latitude.toFixed(6)}|${ticket.longitude.toFixed(6)}|${ticket.category}`;
+  return `${ticket.latitude.toFixed(4)}|${ticket.longitude.toFixed(4)}|${ticket.category}`;
 }
 
-export function groupMappableTickets(tickets: MappableTicket[]): TicketGroup[] {
+/** Parents-only public_tickets: one pin per location+category cluster; report_count from parent. */
+export function groupMappableTickets(
+  tickets: MappableTicket[],
+  photosByRootId: Map<number, string[]> = new Map(),
+): TicketGroup[] {
   const grouped = new Map<string, MappableTicket[]>();
 
   for (const ticket of tickets) {
@@ -65,41 +71,21 @@ export function groupMappableTickets(tickets: MappableTicket[]): TicketGroup[] {
   }
 
   return [...grouped.entries()].map(([key, groupTickets]) => {
-    const sorted = [...groupTickets].sort(
-      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
-    );
-    const parent = sorted.find((ticket) => ticket.parent_ticket_id === null) ?? sorted[0];
-
-    const photos: string[] = [];
-    const seenPhotos = new Set<string>();
-    for (const ticket of sorted) {
-      for (const url of getTicketPhotos(ticket)) {
-        if (!seenPhotos.has(url)) {
-          seenPhotos.add(url);
-          photos.push(url);
-        }
-      }
-    }
-
-    const complainantCount =
-      parent.upvote_count > 1
-        ? parent.upvote_count
-        : sorted.reduce((sum, ticket) => sum + ticket.upvote_count, 0);
-
-    const latestReportedAt = sorted.reduce(
-      (latest, ticket) => (new Date(ticket.updated_at) > new Date(latest) ? ticket.updated_at : latest),
-      sorted[0].updated_at,
-    );
+    // Prefer highest report_count as the pin representative
+    const parent = [...groupTickets].sort((a, b) => b.report_count - a.report_count)[0];
+    const photos = photosByRootId.get(parent.id) ?? [];
 
     return {
       key,
+      ticketId: parent.id,
       category: parent.category,
       latitude: parent.latitude,
       longitude: parent.longitude,
-      firstReportedAt: sorted[0].created_at,
-      latestReportedAt,
+      agency: parent.agency,
+      firstReportedAt: parent.first_reported_at,
+      daysOutstanding: parent.days_outstanding,
       status: parent.status,
-      complainantCount,
+      complainantCount: parent.report_count,
       photos,
     };
   });

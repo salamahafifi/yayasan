@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { supabase } from './lib/supabase';
-import { formatDate, groupMappableTickets, isMappable, type TicketGroup } from './lib/format';
+import { formatDateOrDash, groupMappableTickets, isMappable, type TicketGroup } from './lib/format';
 import {
   STRINGS,
   formatCategoryLabel,
@@ -12,10 +12,7 @@ import {
 } from './lib/i18n';
 import TicketLookup from './components/TicketLookup';
 import PhotoGallery from './components/PhotoGallery';
-import type { IssueCategory, PublicTicket } from './types/database';
-
-const PUBLIC_TICKET_COLUMNS =
-  'id, ticket_number, category, description, status, latitude, longitude, parent_ticket_id, upvote_count, created_at, updated_at, photo_url';
+import { PUBLIC_TICKET_COLUMNS, type IssueCategory, type PublicTicket } from './types/database';
 
 // Initial viewport: Taman Perling (SW) through Kempas (NE) — bounds only, no overlay
 const MAP_CENTER: [number, number] = [1.508, 103.702];
@@ -77,11 +74,17 @@ function TicketPopup({ group, lang }: { group: TicketGroup; lang: Lang }) {
       <p>
         <strong>{t.typeOfComplaint}:</strong> {formatCategoryLabel(group.category, lang)}
       </p>
+      {group.agency && (
+        <p>
+          <strong>Agensi:</strong> {group.agency}
+        </p>
+      )}
       <p>
-        <strong>{t.firstDate}:</strong> {formatDate(group.firstReportedAt)}
+        <strong>{t.firstDate}:</strong> {formatDateOrDash(group.firstReportedAt)}
       </p>
       <p>
-        <strong>{t.latestDate}:</strong> {formatDate(group.latestReportedAt)}
+        <strong>{t.daysOutstanding}:</strong>{' '}
+        {group.daysOutstanding == null ? '—' : group.daysOutstanding}
       </p>
       <p>
         <strong>{t.status}:</strong> {formatStatusLabel(group.status, lang)}
@@ -99,13 +102,14 @@ function TicketPopup({ group, lang }: { group: TicketGroup; lang: Lang }) {
 function App() {
   const [lang, setLang] = useState<Lang>('ms');
   const [tickets, setTickets] = useState<PublicTicket[]>([]);
+  const [photosByRootId, setPhotosByRootId] = useState<Map<number, string[]>>(new Map());
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [panelOpen, setPanelOpen] = useState(true);
 
   const groups = useMemo(
-    () => groupMappableTickets(tickets.filter(isMappable)),
-    [tickets],
+    () => groupMappableTickets(tickets.filter(isMappable), photosByRootId),
+    [tickets, photosByRootId],
   );
 
   const t = STRINGS[lang];
@@ -125,11 +129,38 @@ function App() {
       if (fetchError) {
         setError(fetchError.message);
         setTickets([]);
-      } else {
-        setError(null);
-        setTickets((data ?? []) as PublicTicket[]);
+        setPhotosByRootId(new Map());
+        setLoading(false);
+        return;
       }
 
+      const rows = (data ?? []) as PublicTicket[];
+      setError(null);
+      setTickets(rows);
+
+      const ids = rows.map((r) => r.id);
+      if (ids.length === 0) {
+        setPhotosByRootId(new Map());
+        setLoading(false);
+        return;
+      }
+
+      const { data: photoRows } = await supabase
+        .from('public_ticket_photos')
+        .select('ticket_id, root_ticket_id, photo_url')
+        .in('root_ticket_id', ids);
+
+      if (cancelled) return;
+
+      const map = new Map<number, string[]>();
+      for (const row of photoRows ?? []) {
+        const rootId = row.root_ticket_id as number;
+        const url = row.photo_url as string;
+        const list = map.get(rootId) ?? [];
+        if (!list.includes(url)) list.push(url);
+        map.set(rootId, list);
+      }
+      setPhotosByRootId(map);
       setLoading(false);
     }
 

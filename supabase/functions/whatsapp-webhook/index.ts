@@ -2,6 +2,9 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 type Lang = "ms" | "en" | "zh" | "ta";
 
+const CONSENT_VERSION = "2026-07-29";
+const PRIVACY_URL = "https://aduan.sahkan.my/privacy";
+
 const STRINGS: Record<Lang, Record<string, string>> = {
   ms: {
     category_prompt: "Apa isu yang ingin anda laporkan?",
@@ -35,6 +38,30 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     contact_invalid: "Sila ketik Ya atau Tidak.",
     yes_button: "Ya",
     no_button: "Tidak",
+    ask_agency_prompt:
+      "Ke agensi mana anda telah melaporkan isu ini? (contoh: MBJB, SPAN, TNB)\n\n" +
+      "Taip 'langkau' jika tiada / tidak pasti.",
+    ask_agency_ref_prompt:
+      "Apakah nombor rujukan yang diberikan agensi tersebut?\n\n" +
+      "Taip 'langkau' jika tiada / tidak pasti.",
+    ask_agency_date_prompt:
+      "Lebih kurang bilakah anda melaporkan kepada agensi itu? (contoh: 15/03/2026 atau 2026-03-15)\n\n" +
+      "Taip 'langkau' jika tidak pasti.",
+    agency_date_invalid:
+      "Maaf, kami tidak dapat baca tarikh itu. Cuba DD/MM/YYYY, atau taip 'langkau'.",
+    consent_prompt:
+      "Sebelum kami simpan laporan anda:\n\n" +
+      "• Dasar privasi: " + PRIVACY_URL + "\n" +
+      "• Kami mungkin kongsi butiran kes (termasuk rujukan) dengan agensi untuk susulan\n" +
+      "• Anda boleh pilih sama ada kes dipaparkan di peta awam (tanpa nama atau nombor telefon)\n\n" +
+      "Ketik pilihan anda:",
+    consent_public_button: "Setuju (awam)",
+    consent_private_button: "Setuju (sendiri)",
+    consent_invalid: "Sila ketik salah satu pilihan persetujuan di atas.",
+    stop_confirm:
+      "Anda telah berhenti menerima mesej daripada kami. Kes terbuka kekal; kami tidak akan menghantar mesej lanjut. Taip mesej baharu jika anda ingin melapor semula kemudian.",
+    delete_confirm:
+      "Permintaan pemadaman data anda telah direkodkan. Kami akan mengesahkan identiti anda dan melengkapkan dalam masa 21 hari. Maklumat lanjut: https://aduan.sahkan.my/data-deletion",
   },
   en: {
     category_prompt: "What issue would you like to report?",
@@ -68,6 +95,30 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     contact_invalid: "Please tap Yes or No.",
     yes_button: "Yes",
     no_button: "No",
+    ask_agency_prompt:
+      "Which agency did you already report this to? (e.g. MBJB, SPAN, TNB)\n\n" +
+      "Type 'skip' if none / unsure.",
+    ask_agency_ref_prompt:
+      "What reference number did that agency give you?\n\n" +
+      "Type 'skip' if none / unsure.",
+    ask_agency_date_prompt:
+      "Roughly when did you report it to the agency? (e.g. 15/03/2026 or 2026-03-15)\n\n" +
+      "Type 'skip' if unsure.",
+    agency_date_invalid:
+      "Sorry, we couldn't read that date. Try DD/MM/YYYY, or type 'skip'.",
+    consent_prompt:
+      "Before we save your report:\n\n" +
+      "• Privacy policy: " + PRIVACY_URL + "\n" +
+      "• We may share case details (including the reference) with the agency to follow up\n" +
+      "• You can choose whether the case appears on the public map (never with your name or phone number)\n\n" +
+      "Tap your choice:",
+    consent_public_button: "Agree (public)",
+    consent_private_button: "Agree (private)",
+    consent_invalid: "Please tap one of the consent options above.",
+    stop_confirm:
+      "You have opted out of messages from us. Open cases stay open; we will not message you further. Send a new message later if you want to report again.",
+    delete_confirm:
+      "Your data deletion request has been logged. We will verify your identity and complete it within 21 days. More info: https://aduan.sahkan.my/data-deletion",
   },
   zh: {
     category_prompt: "您要报告什么问题?",
@@ -101,6 +152,21 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     contact_invalid: "请点击'可以'或'不可以'。",
     yes_button: "可以",
     no_button: "不可以",
+    ask_agency_prompt: "您已向哪个机构报告过此问题?(例如 MBJB、SPAN、TNB)\n\n输入 'skip' 可跳过。",
+    ask_agency_ref_prompt: "该机构给您的参考编号是什么?\n\n输入 'skip' 可跳过。",
+    ask_agency_date_prompt: "您大约何时向该机构报告?(例如 15/03/2026 或 2026-03-15)\n\n输入 'skip' 可跳过。",
+    agency_date_invalid: "抱歉,无法识别该日期。请用 DD/MM/YYYY,或输入 'skip'。",
+    consent_prompt:
+      "保存报告前:\n\n" +
+      "• 隐私政策: " + PRIVACY_URL + "\n" +
+      "• 我们可能与机构共享案件详情(含参考编号)以便跟进\n" +
+      "• 您可选择是否在公开地图上显示案件(绝不显示姓名或电话)\n\n" +
+      "请点击您的选择:",
+    consent_public_button: "同意(公开)",
+    consent_private_button: "同意(不公开)",
+    consent_invalid: "请点击上方的同意选项之一。",
+    stop_confirm: "您已停止接收我们的消息。未结案件仍保留;我们不会再发消息。以后如需再报告,请发送新消息。",
+    delete_confirm: "您的数据删除请求已记录。我们将核实身份并在21天内完成。详情: https://aduan.sahkan.my/data-deletion",
   },
   ta: {
     category_prompt: "நீங்கள் எந்த சிக்கலைப் புகாரளிக்க விரும்புகிறீர்கள்?",
@@ -126,7 +192,7 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     confirm_photo_attached: "புகைப்படம்: இணைக்கப்பட்டுள்ளது",
     confirm_voice_attached: "குரல் குறிப்பு: கீழே எழுத்துவடிவமாக்கப்பட்டுள்ளது, சரிபார்க்கவும்",
     confirm_prompt: "தொடர 'சரி' என்பதைத் தட்டவும், அல்லது மாற்ற 'category'/'restart' எனத் தட்டச்சு செய்யவும்.",
-    confirm_invalid: "'சரி' என்பதைத் தட்டவும், அல்லது மாற்ற 'category'/'restart' எனத் தட்டச்சு செய்யவும்.",
+    confirm_invalid: "சரி' என்பதைத் தட்டவும், அல்லது மாற்ற 'category'/'restart' எனத் தட்டச்சு செய்யவும்.",
     confirm_button: "சரி",
     ask_name_prompt: "உங்கள் பெயர் என்ன? இது இந்த புகார் தொடர்பாக உங்களைத் தொடர்புகொள்ள உதவும்.",
     name_required_error: "உங்கள் பெயரைத் தட்டச்சு செய்யவும்.",
@@ -134,6 +200,21 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     contact_invalid: "தயவுசெய்து 'ஆம்' அல்லது 'இல்லை' என்பதைத் தட்டவும்.",
     yes_button: "ஆம்",
     no_button: "இல்லை",
+    ask_agency_prompt: "இந்த சிக்கலை ஏற்கனவே எந்த நிறுவனத்திடம் புகாரளித்தீர்கள்? (எ.கா. MBJB, SPAN, TNB)\n\nதவிர்க்க 'skip' எனத் தட்டச்சு செய்யவும்.",
+    ask_agency_ref_prompt: "அந்த நிறுவனம் கொடுத்த குறிப்பு எண் என்ன?\n\nதவிர்க்க 'skip' எனத் தட்டச்சு செய்யவும்.",
+    ask_agency_date_prompt: "ஏறக்குறைய எப்போது அந்த நிறுவனத்திடம் புகாரளித்தீர்கள்? (எ.கா. 15/03/2026 அல்லது 2026-03-15)\n\nதவிர்க்க 'skip' எனத் தட்டச்சு செய்யவும்.",
+    agency_date_invalid: "மன்னிக்கவும், தேதியைப் படிக்க முடியவில்லை. DD/MM/YYYY முயற்சிக்கவும், அல்லது 'skip' எனத் தட்டச்சு செய்யவும்.",
+    consent_prompt:
+      "உங்கள் புகாரைச் சேமிப்பதற்கு முன்:\n\n" +
+      "• தனியுரிமைக் கொள்கை: " + PRIVACY_URL + "\n" +
+      "• தொடர்ந்து செயல்பட நிறுவனத்துடன் வழக்கு விவரங்களை (குறிப்பு எண் உட்பட) பகிரலாம்\n" +
+      "• பொது வரைபடத்தில் வழக்கு தோன்றலாமா என்பதை நீங்கள் தேர்வு செய்யலாம் (பெயர்/தொலைபேசி இல்லை)\n\n" +
+      "உங்கள் தேர்வைத் தட்டவும்:",
+    consent_public_button: "ஒப்புதல் (பொது)",
+    consent_private_button: "ஒப்புதல் (தனி)",
+    consent_invalid: "மேலே உள்ள ஒப்புதல் விருப்பங்களில் ஒன்றைத் தட்டவும்.",
+    stop_confirm: "எங்களிடமிருந்து செய்திகளை நிறுத்திவிட்டீர்கள். திறந்த வழக்குகள் தொடரும்; மேலும் செய்தி அனுப்பமாட்டோம். பின்னர் புகாரளிக்க புதிய செய்தி அனுப்பவும்.",
+    delete_confirm: "உங்கள் தரவு நீக்கக் கோரிக்கை பதிவு செய்யப்பட்டது. அடையாளத்தைச் சரிபார்த்து 21 நாட்களில் முடிப்போம். விவரம்: https://aduan.sahkan.my/data-deletion",
   },
 };
 
@@ -156,6 +237,9 @@ const CATEGORIES = ["jalan_berlubang", "banjir", "lampu_jalan", "sampah", "lain_
 
 const RESTART_COMMANDS = ["restart", "language", "bahasa", "mula semula"];
 const CATEGORY_COMMANDS = ["category", "kategori"];
+const SKIP_COMMANDS = ["skip", "langkau", "langkan", "-"];
+const STOP_COMMANDS = ["stop", "berhenti"];
+const DELETE_COMMANDS = ["padam", "delete"];
 
 const CLEAR_CATEGORY_ONWARDS = {
   category: null,
@@ -167,9 +251,79 @@ const CLEAR_CATEGORY_ONWARDS = {
   address_text: null,
   name: null,
   contactable: null,
+  agency: null,
+  agency_ref: null,
+  agency_reported_at: null,
+  publish_agency_ref: null,
+  public_display_opt_out: null,
+  consent_given_at: null,
+  consent_version: null,
 };
 
+function isSkip(text: string | undefined): boolean {
+  return !!text && SKIP_COMMANDS.includes(text.trim().toLowerCase());
+}
+
+/** Parse rough dates: YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY. */
+function parseAgencyDate(raw: string): string | null {
+  const t = raw.trim();
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(t);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  const dmy = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/.exec(t);
+  if (dmy) {
+    const d = dmy[1].padStart(2, "0");
+    const m = dmy[2].padStart(2, "0");
+    const y = dmy[3];
+    const dt = new Date(`${y}-${m}-${d}T00:00:00Z`);
+    if (Number.isNaN(dt.getTime())) return null;
+    if (dt.getUTCFullYear() !== Number(y) || dt.getUTCMonth() + 1 !== Number(m) || dt.getUTCDate() !== Number(d)) {
+      return null;
+    }
+    return `${y}-${m}-${d}`;
+  }
+  return null;
+}
+
+async function isMessagingOptedOut(whatsappNumber: string): Promise<boolean> {
+  const { data } = await supabase
+    .from("whatsapp_messaging_preferences")
+    .select("messaging_opted_out")
+    .eq("whatsapp_number", whatsappNumber)
+    .maybeSingle();
+  return data?.messaging_opted_out === true;
+}
+
+async function setMessagingOptedOut(whatsappNumber: string) {
+  await supabase.from("whatsapp_messaging_preferences").upsert({
+    whatsapp_number: whatsappNumber,
+    messaging_opted_out: true,
+    updated_at: new Date().toISOString(),
+  });
+  await supabase
+    .from("tickets")
+    .update({ messaging_opted_out: true })
+    .eq("whatsapp_number", whatsappNumber);
+}
+
 async function sendWhatsAppMessage(to: string, payload: Record<string, unknown>) {
+  if (await isMessagingOptedOut(to)) {
+    console.log("Skip WhatsApp send; messaging opted out:", to);
+    return;
+  }
+
+  const res = await fetch(`https://graph.facebook.com/v25.0/${Deno.env.get("WHATSAPP_PHONE_NUMBER_ID")}/messages`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${Deno.env.get("WHATSAPP_ACCESS_TOKEN")}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ messaging_product: "whatsapp", to, ...payload }),
+  });
+  if (!res.ok) console.error("WhatsApp send failed:", await res.text());
+}
+
+/** Bypass opt-out check for the single STOP/DELETE confirmation replies. */
+async function sendWhatsAppMessageForced(to: string, payload: Record<string, unknown>) {
   const res = await fetch(`https://graph.facebook.com/v25.0/${Deno.env.get("WHATSAPP_PHONE_NUMBER_ID")}/messages`, {
     method: "POST",
     headers: {
@@ -183,6 +337,10 @@ async function sendWhatsAppMessage(to: string, payload: Record<string, unknown>)
 
 function sendText(to: string, text: string) {
   return sendWhatsAppMessage(to, { type: "text", text: { body: text } });
+}
+
+function sendTextForced(to: string, text: string) {
+  return sendWhatsAppMessageForced(to, { type: "text", text: { body: text } });
 }
 
 function sendList(
@@ -234,6 +392,13 @@ function sendLocationPrompt(to: string, lang: Lang) {
 
 function sendDescriptionPrompt(to: string, lang: Lang) {
   return sendText(to, STRINGS[lang].description_prompt);
+}
+
+function sendConsentPrompt(to: string, lang: Lang) {
+  return sendButtons(to, STRINGS[lang].consent_prompt, [
+    { id: "consent_public", title: STRINGS[lang].consent_public_button },
+    { id: "consent_private", title: STRINGS[lang].consent_private_button },
+  ]);
 }
 
 function buildSummary(s: Record<string, any>, lang: Lang): string {
@@ -341,6 +506,13 @@ async function handleSubmit(
     voice_note_url: string | null;
     name: string | null;
     contactable: boolean | null;
+    agency: string | null;
+    agency_ref: string | null;
+    agency_reported_at: string | null;
+    publish_agency_ref: boolean | null;
+    public_display_opt_out: boolean | null;
+    consent_given_at: string | null;
+    consent_version: string | null;
   },
   lang: Lang,
   whatsappMessageId: string,
@@ -359,6 +531,13 @@ async function handleSubmit(
     p_voice_note_url: session.voice_note_url ?? null,
     p_contactable: session.contactable ?? true,
     p_whatsapp_message_id: whatsappMessageId,
+    p_agency: session.agency ?? null,
+    p_agency_ref: session.agency_ref ?? null,
+    p_agency_reported_at: session.agency_reported_at ?? null,
+    p_publish_agency_ref: session.publish_agency_ref ?? true,
+    p_public_display_opt_out: session.public_display_opt_out ?? false,
+    p_consent_given_at: session.consent_given_at ?? new Date().toISOString(),
+    p_consent_version: session.consent_version ?? CONSENT_VERSION,
   });
 
   if (error || !ticket) {
@@ -426,6 +605,23 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       const lang = (session?.language ?? "en") as Lang;
+
+      // Keyword handling (trimmed, case-insensitive) — before normal flow.
+      if (lowerText && STOP_COMMANDS.includes(lowerText)) {
+        await sendTextForced(from, STRINGS[lang].stop_confirm);
+        await setMessagingOptedOut(from);
+        return new Response("EVENT_RECEIVED", { status: 200 });
+      }
+      if (lowerText && DELETE_COMMANDS.includes(lowerText)) {
+        await supabase.from("deletion_requests").insert({ whatsapp_number: from, status: "pending" });
+        await sendTextForced(from, STRINGS[lang].delete_confirm);
+        return new Response("EVENT_RECEIVED", { status: 200 });
+      }
+
+      // After STOP, ignore all further messages (no replies).
+      if (await isMessagingOptedOut(from)) {
+        return new Response("EVENT_RECEIVED", { status: 200 });
+      }
 
       if (!session) {
         await supabase.from("conversation_sessions").insert({ whatsapp_number: from, step: "language" });
@@ -579,13 +775,87 @@ Deno.serve(async (req) => {
       } else if (session.step === "ask_contact") {
         if (replyId === "contact_yes" || replyId === "contact_no") {
           const contactable = replyId === "contact_yes";
-          await supabase.from("conversation_sessions").update({ contactable }).eq("whatsapp_number", from);
-          await handleSubmit(from, { ...session, contactable }, lang, message.id, profileName);
+          await supabase
+            .from("conversation_sessions")
+            .update({ contactable, step: "ask_agency" })
+            .eq("whatsapp_number", from);
+          await sendText(from, STRINGS[lang].ask_agency_prompt);
         } else {
           await sendButtons(from, STRINGS[lang].contact_invalid, [
             { id: "contact_yes", title: STRINGS[lang].yes_button },
             { id: "contact_no", title: STRINGS[lang].no_button },
           ]);
+        }
+      } else if (session.step === "ask_agency") {
+        if (text) {
+          const agency = isSkip(text) ? null : text;
+          await supabase
+            .from("conversation_sessions")
+            .update({ agency, step: "ask_agency_ref" })
+            .eq("whatsapp_number", from);
+          await sendText(from, STRINGS[lang].ask_agency_ref_prompt);
+        } else {
+          await sendText(from, STRINGS[lang].ask_agency_prompt);
+        }
+      } else if (session.step === "ask_agency_ref") {
+        if (text) {
+          const agency_ref = isSkip(text) ? null : text;
+          await supabase
+            .from("conversation_sessions")
+            .update({ agency_ref, step: "ask_agency_date" })
+            .eq("whatsapp_number", from);
+          await sendText(from, STRINGS[lang].ask_agency_date_prompt);
+        } else {
+          await sendText(from, STRINGS[lang].ask_agency_ref_prompt);
+        }
+      } else if (session.step === "ask_agency_date") {
+        if (text) {
+          if (isSkip(text)) {
+            await supabase
+              .from("conversation_sessions")
+              .update({ agency_reported_at: null, step: "ask_consent" })
+              .eq("whatsapp_number", from);
+            await sendConsentPrompt(from, lang);
+          } else {
+            const parsed = parseAgencyDate(text);
+            if (!parsed) {
+              await sendText(from, STRINGS[lang].agency_date_invalid);
+            } else {
+              await supabase
+                .from("conversation_sessions")
+                .update({ agency_reported_at: parsed, step: "ask_consent" })
+                .eq("whatsapp_number", from);
+              await sendConsentPrompt(from, lang);
+            }
+          }
+        } else {
+          await sendText(from, STRINGS[lang].ask_agency_date_prompt);
+        }
+      } else if (session.step === "ask_consent") {
+        if (replyId === "consent_public" || replyId === "consent_private") {
+          const public_display_opt_out = replyId === "consent_private";
+          const publish_agency_ref = replyId === "consent_public";
+          const consent_given_at = new Date().toISOString();
+          const updated = {
+            ...session,
+            public_display_opt_out,
+            publish_agency_ref,
+            consent_given_at,
+            consent_version: CONSENT_VERSION,
+          };
+          await supabase
+            .from("conversation_sessions")
+            .update({
+              public_display_opt_out,
+              publish_agency_ref,
+              consent_given_at,
+              consent_version: CONSENT_VERSION,
+            })
+            .eq("whatsapp_number", from);
+          await handleSubmit(from, updated, lang, message.id, profileName);
+        } else {
+          await sendConsentPrompt(from, lang);
+          await sendText(from, STRINGS[lang].consent_invalid);
         }
       } else {
         await sendText(from, `(next step: ${session.step}, coming soon)`);
