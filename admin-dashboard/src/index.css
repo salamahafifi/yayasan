@@ -58,6 +58,12 @@ html, body, #root {
   margin: 0;
 }
 
+.login__info {
+  color: #1B4332;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
 .login__button {
   padding: 10px;
   border: none;
@@ -71,6 +77,19 @@ html, body, #root {
 .login__button:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+.login__fallback {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.login__button--secondary {
+  background: #4A5568;
 }
 
 .dashboard__header {
@@ -128,6 +147,25 @@ html, body, #root {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   overflow: hidden;
+}
+
+.staff-approvals {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.staff-approvals__title {
+  margin: 0;
+  font-size: 1rem;
+  color: #1A1D20;
+}
+
+.staff-approvals__active {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
 }
 
 .ticket-table-wrapper {

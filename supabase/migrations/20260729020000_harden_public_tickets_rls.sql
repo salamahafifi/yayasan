@@ -2,7 +2,9 @@
 -- Does NOT rewrite tickets.latitude / tickets.longitude / tickets.address_text (admin keeps full data).
 
 -- 1. Rebuild public view: no adun_priority, no address_text; lat/lng rounded to 4 dp.
-CREATE OR REPLACE VIEW public.public_tickets AS
+-- DROP required: CREATE OR REPLACE cannot remove columns from an existing view.
+DROP VIEW IF EXISTS public.public_tickets;
+CREATE VIEW public.public_tickets AS
 SELECT
   p.id,
   p.ticket_number,
@@ -18,6 +20,9 @@ SELECT
   p.photo_url
 FROM public.tickets p
 WHERE p.is_public = true;
+
+COMMENT ON VIEW public.public_tickets IS
+  'Public map surface. Must NOT expose name, whatsapp_number, adun_priority, or address_text. Coordinates are rounded to 4 decimal places (~street level). Keep this view free of PII.';
 
 -- 2. Anon: SELECT only on the public view.
 REVOKE ALL ON TABLE public.public_tickets FROM anon;

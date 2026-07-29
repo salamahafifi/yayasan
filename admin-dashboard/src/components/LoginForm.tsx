@@ -1,16 +1,60 @@
 import { useState, type FormEvent } from 'react';
 import { supabase } from '../lib/supabase';
 
+/** Set true to show password fields again. */
+const ENABLE_PASSWORD_FALLBACK = false;
+
 function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: FormEvent) {
+  async function handleGoogleSignIn() {
+    setLoading(true);
+    setError(null);
+    setInfo(null);
+
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+
+    if (oauthError) {
+      setError(oauthError.message);
+      setLoading(false);
+    }
+  }
+
+  async function handleMagicLink(e: FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setInfo(null);
+
+    const { error: otpError } = await supabase.auth.signInWithOtp({
+      email: email.trim(),
+      options: {
+        emailRedirectTo: window.location.origin,
+      },
+    });
+
+    if (otpError) {
+      setError(otpError.message);
+    } else {
+      setInfo('Pautan log masuk telah dihantar ke e-mel anda. Sila semak peti masuk.');
+    }
+    setLoading(false);
+  }
+
+  async function handlePasswordSubmit(e: FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setInfo(null);
 
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
 
@@ -20,33 +64,56 @@ function LoginForm() {
 
   return (
     <div className="login">
-      <form onSubmit={handleSubmit} className="login__form">
+      <div className="login__form">
         <h1 className="login__title">Log Masuk Staf</h1>
-        <label className="login__label">
-          Email
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="login__input"
-          />
-        </label>
-        <label className="login__label">
-          Password
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="login__input"
-          />
-        </label>
-        {error && <p className="login__error">{error}</p>}
-        <button type="submit" disabled={loading} className="login__button">
-          {loading ? 'Signing in…' : 'Sign in'}
+
+        <button
+          type="button"
+          disabled={loading}
+          className="login__button"
+          onClick={() => void handleGoogleSignIn()}
+        >
+          {loading ? 'Mengalihkan…' : 'Log masuk dengan Google'}
         </button>
-      </form>
+
+        <form onSubmit={handleMagicLink} className="login__fallback">
+          <label className="login__label">
+            E-mel
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="login__input"
+              autoComplete="email"
+            />
+          </label>
+          <button type="submit" disabled={loading} className="login__button login__button--secondary">
+            {loading ? 'Menghantar…' : 'Log masuk dengan e-mel'}
+          </button>
+        </form>
+
+        {ENABLE_PASSWORD_FALLBACK && (
+          <form onSubmit={handlePasswordSubmit} className="login__fallback">
+            <label className="login__label">
+              Password
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="login__input"
+              />
+            </label>
+            <button type="submit" disabled={loading} className="login__button login__button--secondary">
+              {loading ? 'Signing in…' : 'Sign in with password'}
+            </button>
+          </form>
+        )}
+
+        {info && <p className="login__info">{info}</p>}
+        {error && <p className="login__error">{error}</p>}
+      </div>
     </div>
   );
 }
