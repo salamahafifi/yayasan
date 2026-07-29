@@ -323,9 +323,19 @@ body,
   border-bottom: 1px solid #e5e7eb;
 }
 
-.ticket-lookup__title {
+.ticket-lookup__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   margin: 0 0 8px;
+}
+
+.ticket-lookup__title {
+  margin: 0;
   font-weight: 600;
+  flex: 1;
+  min-width: 0;
 }
 
 .ticket-lookup__form {

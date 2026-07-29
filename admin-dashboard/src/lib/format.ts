@@ -9,11 +9,11 @@ export const STATUS_LABELS: Record<TicketStatus, string> = {
 };
 
 export const CATEGORY_LABELS: Record<IssueCategory, string> = {
+  longkang_tersumbat: 'Longkang tersumbat',
   jalan_berlubang: 'Jalan berlubang',
-  banjir: 'Banjir',
-  lampu_jalan: 'Lampu jalan',
-  sampah: 'Sampah',
-  bantuan_kebajikan: 'Bantuan kebajikan',
+  lampu_jalan: 'Lampu jalan rosak',
+  sampah: 'Sampah tidak dikutip',
+  semak: 'Semak panjang',
   lain_lain: 'Lain-lain',
 };
 

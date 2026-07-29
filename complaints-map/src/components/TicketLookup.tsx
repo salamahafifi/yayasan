@@ -8,9 +8,10 @@ type LookupState = 'idle' | 'loading' | 'found' | 'not_found' | 'error';
 
 type TicketLookupProps = {
   lang: Lang;
+  onMinimize?: () => void;
 };
 
-function TicketLookup({ lang }: TicketLookupProps) {
+function TicketLookup({ lang, onMinimize }: TicketLookupProps) {
   const [input, setInput] = useState('');
   const [state, setState] = useState<LookupState>('idle');
   const [result, setResult] = useState<TicketStatusResult | null>(null);
@@ -48,7 +49,21 @@ function TicketLookup({ lang }: TicketLookupProps) {
 
   return (
     <div className="ticket-lookup">
-      <p className="ticket-lookup__title">{t.trackReport}</p>
+      <div className="ticket-lookup__header">
+        <p className="ticket-lookup__title">{t.trackReport}</p>
+        {onMinimize && (
+          <button
+            type="button"
+            className="map-overlay__toggle"
+            onClick={onMinimize}
+            aria-label={t.hidePanel}
+            aria-expanded={true}
+            title={t.hidePanel}
+          >
+            −
+          </button>
+        )}
+      </div>
       <form onSubmit={handleSearch} className="ticket-lookup__form">
         <input
           type="text"

@@ -13,7 +13,14 @@ import {
 } from '../types/database';
 
 const STATUS_OPTIONS: TicketStatus[] = ['baru', 'siasat', 'majlis_perbandaran', 'selesai', 'tangguh'];
-const CATEGORY_OPTIONS: IssueCategory[] = ['jalan_berlubang', 'banjir', 'lampu_jalan', 'sampah', 'lain_lain'];
+const CATEGORY_OPTIONS: IssueCategory[] = [
+  'longkang_tersumbat',
+  'jalan_berlubang',
+  'lampu_jalan',
+  'sampah',
+  'semak',
+  'lain_lain',
+];
 
 type TicketTableProps = {
   role: StaffRole;

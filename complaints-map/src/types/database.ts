@@ -1,11 +1,11 @@
 export type TicketStatus = 'baru' | 'siasat' | 'majlis_perbandaran' | 'selesai' | 'tangguh';
 
 export type IssueCategory =
+  | 'longkang_tersumbat'
   | 'jalan_berlubang'
-  | 'banjir'
   | 'lampu_jalan'
   | 'sampah'
-  | 'bantuan_kebajikan'
+  | 'semak'
   | 'lain_lain';
 
 /** Row from public_tickets (map pins). No ticket_number, description, or photos. */

@@ -136,9 +136,25 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
 };
 
 export const CATEGORY_LABELS: Record<string, Record<Lang, string>> = {
+  longkang_tersumbat: {
+    ms: "Longkang tersumbat",
+    en: "Clogged drain",
+    zh: "排水沟堵塞",
+    ta: "அடைந்த வடிகால்",
+  },
   jalan_berlubang: { ms: "Jalan berlubang", en: "Pothole", zh: "坑洞", ta: "சாலைக் குழி" },
-  banjir: { ms: "Banjir", en: "Flooding", zh: "水灾", ta: "வெள்ளம்" },
-  lampu_jalan: { ms: "Lampu jalan", en: "Streetlight", zh: "路灯", ta: "தெரு விளக்கு" },
-  sampah: { ms: "Sampah", en: "Rubbish", zh: "垃圾", ta: "குப்பை" },
+  lampu_jalan: {
+    ms: "Lampu jalan rosak",
+    en: "Broken streetlight",
+    zh: "路灯故障",
+    ta: "தெரு விளக்கு பழுது",
+  },
+  sampah: {
+    ms: "Sampah tidak dikutip",
+    en: "Uncollected rubbish",
+    zh: "垃圾未清运",
+    ta: "குப்பை எடுக்கப்படவில்லை",
+  },
+  semak: { ms: "Semak panjang", en: "Overgrown bushes", zh: "杂草过长", ta: "நீண்ட புதர்" },
   lain_lain: { ms: "Lain-lain", en: "Other", zh: "其他", ta: "மற்றவை" },
 };

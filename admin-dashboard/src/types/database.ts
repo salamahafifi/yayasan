@@ -1,9 +1,9 @@
 export type IssueCategory =
+  | 'longkang_tersumbat'
   | 'jalan_berlubang'
-  | 'banjir'
   | 'lampu_jalan'
   | 'sampah'
-  | 'bantuan_kebajikan'
+  | 'semak'
   | 'lain_lain';
 
 export type TicketStatus = 'baru' | 'siasat' | 'majlis_perbandaran' | 'selesai' | 'tangguh';

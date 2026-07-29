@@ -3,7 +3,6 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 type Lang = "ms" | "en" | "zh" | "ta";
 
 const CONSENT_VERSION = "2026-07-29";
-const PRIVACY_URL = "https://aduan.sahkan.my/privacy";
 
 const STRINGS: Record<Lang, Record<string, string>> = {
   ms: {
@@ -39,25 +38,30 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     yes_button: "Ya",
     no_button: "Tidak",
     ask_agency_prompt:
-      "Ke agensi mana anda telah melaporkan isu ini? (contoh: MBJB, SPAN, TNB)\n\n" +
-      "Taip 'langkau' jika tiada / tidak pasti.",
+      "Ke agensi mana anda telah melaporkan isu ini? (contoh: MBJB, SPAN, TNB)",
     ask_agency_ref_prompt:
-      "Apakah nombor rujukan yang diberikan agensi tersebut?\n\n" +
-      "Taip 'langkau' jika tiada / tidak pasti.",
+      "Apakah nombor rujukan yang diberikan agensi tersebut?",
     ask_agency_date_prompt:
-      "Lebih kurang bilakah anda melaporkan kepada agensi itu? (contoh: 15/03/2026 atau 2026-03-15)\n\n" +
-      "Taip 'langkau' jika tidak pasti.",
+      "Lebih kurang bilakah anda melaporkan kepada agensi itu? (contoh: 15/03/2026 atau 2026-03-15)",
     agency_date_invalid:
-      "Maaf, kami tidak dapat baca tarikh itu. Cuba DD/MM/YYYY, atau taip 'langkau'.",
+      "Maaf, kami tidak dapat baca tarikh itu. Cuba DD/MM/YYYY, atau ketik Tiada / NA.",
+    agency_na_button: "Tiada / NA",
     consent_prompt:
-      "Sebelum kami simpan laporan anda:\n\n" +
-      "• Dasar privasi: " + PRIVACY_URL + "\n" +
-      "• Kami mungkin kongsi butiran kes (termasuk rujukan) dengan agensi untuk susulan\n" +
-      "• Anda boleh pilih sama ada kes dipaparkan di peta awam (tanpa nama atau nombor telefon)\n\n" +
-      "Ketik pilihan anda:",
-    consent_public_button: "Setuju (awam)",
-    consent_private_button: "Setuju (sendiri)",
+      "Sebelum kami hantar aduan anda:\n\n" +
+      "📍 Aduan anda akan jadi satu titik di peta awam. Orang boleh nampak jenis masalah, kawasan, dan berapa lama agensi belum jawab.\n\n" +
+      "🔒 Nama dan nombor telefon anda tidak dipaparkan.\n\n" +
+      "📤 Butiran penuh dihantar kepada agensi untuk susulan.\n\n" +
+      "📷 Gambar dipaparkan hanya selepas staf kami semak.\n\n" +
+      "Dasar privasi: aduan.sahkan.my/privacy",
+    consent_agree_button: "Setuju & hantar",
+    consent_decline_button: "Tidak setuju",
     consent_invalid: "Sila ketik salah satu pilihan persetujuan di atas.",
+    consent_decline_confirm:
+      "Kalau tidak setuju, semua maklumat tadi akan dipadam dan aduan tidak diteruskan.",
+    consent_back_button: "Kembali & setuju",
+    consent_discard_button: "Padam & keluar",
+    consent_discarded:
+      "Terima kasih. Kami tidak simpan sebarang maklumat anda.",
     stop_confirm:
       "Anda telah berhenti menerima mesej daripada kami. Kes terbuka kekal; kami tidak akan menghantar mesej lanjut. Taip mesej baharu jika anda ingin melapor semula kemudian.",
     delete_confirm:
@@ -96,25 +100,30 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     yes_button: "Yes",
     no_button: "No",
     ask_agency_prompt:
-      "Which agency did you already report this to? (e.g. MBJB, SPAN, TNB)\n\n" +
-      "Type 'skip' if none / unsure.",
+      "Which agency did you already report this to? (e.g. MBJB, SPAN, TNB)",
     ask_agency_ref_prompt:
-      "What reference number did that agency give you?\n\n" +
-      "Type 'skip' if none / unsure.",
+      "What reference number did that agency give you?",
     ask_agency_date_prompt:
-      "Roughly when did you report it to the agency? (e.g. 15/03/2026 or 2026-03-15)\n\n" +
-      "Type 'skip' if unsure.",
+      "Roughly when did you report it to the agency? (e.g. 15/03/2026 or 2026-03-15)",
     agency_date_invalid:
-      "Sorry, we couldn't read that date. Try DD/MM/YYYY, or type 'skip'.",
+      "Sorry, we couldn't read that date. Try DD/MM/YYYY, or tap None / NA.",
+    agency_na_button: "None / NA",
     consent_prompt:
-      "Before we save your report:\n\n" +
-      "• Privacy policy: " + PRIVACY_URL + "\n" +
-      "• We may share case details (including the reference) with the agency to follow up\n" +
-      "• You can choose whether the case appears on the public map (never with your name or phone number)\n\n" +
-      "Tap your choice:",
-    consent_public_button: "Agree (public)",
-    consent_private_button: "Agree (private)",
+      "Before we submit your complaint:\n\n" +
+      "📍 Your complaint will appear as a point on the public map. People can see the type of problem, the area, and how long the agency has not responded.\n\n" +
+      "🔒 Your name and phone number are not displayed.\n\n" +
+      "📤 Full details are sent to the agency for follow-up.\n\n" +
+      "📷 Photos are displayed only after our staff review them.\n\n" +
+      "Privacy policy: aduan.sahkan.my/privacy",
+    consent_agree_button: "Agree & submit",
+    consent_decline_button: "Do not agree",
     consent_invalid: "Please tap one of the consent options above.",
+    consent_decline_confirm:
+      "If you do not agree, all the information you sent will be deleted and the complaint will not proceed.",
+    consent_back_button: "Back & agree",
+    consent_discard_button: "Delete & exit",
+    consent_discarded:
+      "Thank you. We have not kept any of your information.",
     stop_confirm:
       "You have opted out of messages from us. Open cases stay open; we will not message you further. Send a new message later if you want to report again.",
     delete_confirm:
@@ -152,19 +161,27 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     contact_invalid: "请点击'可以'或'不可以'。",
     yes_button: "可以",
     no_button: "不可以",
-    ask_agency_prompt: "您已向哪个机构报告过此问题?(例如 MBJB、SPAN、TNB)\n\n输入 'skip' 可跳过。",
-    ask_agency_ref_prompt: "该机构给您的参考编号是什么?\n\n输入 'skip' 可跳过。",
-    ask_agency_date_prompt: "您大约何时向该机构报告?(例如 15/03/2026 或 2026-03-15)\n\n输入 'skip' 可跳过。",
-    agency_date_invalid: "抱歉,无法识别该日期。请用 DD/MM/YYYY,或输入 'skip'。",
+    ask_agency_prompt: "您已向哪个机构报告过此问题?(例如 MBJB、SPAN、TNB)",
+    ask_agency_ref_prompt: "该机构给您的参考编号是什么?",
+    ask_agency_date_prompt: "您大约何时向该机构报告?(例如 15/03/2026 或 2026-03-15)",
+    agency_date_invalid: "抱歉,无法识别该日期。请用 DD/MM/YYYY,或点击无 / NA。",
+    agency_na_button: "无 / NA",
     consent_prompt:
-      "保存报告前:\n\n" +
-      "• 隐私政策: " + PRIVACY_URL + "\n" +
-      "• 我们可能与机构共享案件详情(含参考编号)以便跟进\n" +
-      "• 您可选择是否在公开地图上显示案件(绝不显示姓名或电话)\n\n" +
-      "请点击您的选择:",
-    consent_public_button: "同意(公开)",
-    consent_private_button: "同意(不公开)",
+      "在我们提交您的投诉之前:\n\n" +
+      "📍 您的投诉会成为公共地图上的一个点。其他人可以看到问题类型、地区,以及有关机构尚未回应了多久。\n\n" +
+      "🔒 您的姓名和电话号码不会公开显示。\n\n" +
+      "📤 完整资料会发送给有关机构跟进。\n\n" +
+      "📷 照片只有在工作人员审核后才会显示。\n\n" +
+      "隐私政策: aduan.sahkan.my/privacy",
+    consent_agree_button: "同意并提交",
+    consent_decline_button: "不同意",
     consent_invalid: "请点击上方的同意选项之一。",
+    consent_decline_confirm:
+      "如果您不同意,刚才的所有资料都会被删除,投诉也不会继续。",
+    consent_back_button: "返回并同意",
+    consent_discard_button: "删除并退出",
+    consent_discarded:
+      "谢谢。我们没有保存您的任何资料。",
     stop_confirm: "您已停止接收我们的消息。未结案件仍保留;我们不会再发消息。以后如需再报告,请发送新消息。",
     delete_confirm: "您的数据删除请求已记录。我们将核实身份并在21天内完成。详情: https://aduan.sahkan.my/data-deletion",
   },
@@ -200,29 +217,53 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     contact_invalid: "தயவுசெய்து 'ஆம்' அல்லது 'இல்லை' என்பதைத் தட்டவும்.",
     yes_button: "ஆம்",
     no_button: "இல்லை",
-    ask_agency_prompt: "இந்த சிக்கலை ஏற்கனவே எந்த நிறுவனத்திடம் புகாரளித்தீர்கள்? (எ.கா. MBJB, SPAN, TNB)\n\nதவிர்க்க 'skip' எனத் தட்டச்சு செய்யவும்.",
-    ask_agency_ref_prompt: "அந்த நிறுவனம் கொடுத்த குறிப்பு எண் என்ன?\n\nதவிர்க்க 'skip' எனத் தட்டச்சு செய்யவும்.",
-    ask_agency_date_prompt: "ஏறக்குறைய எப்போது அந்த நிறுவனத்திடம் புகாரளித்தீர்கள்? (எ.கா. 15/03/2026 அல்லது 2026-03-15)\n\nதவிர்க்க 'skip' எனத் தட்டச்சு செய்யவும்.",
-    agency_date_invalid: "மன்னிக்கவும், தேதியைப் படிக்க முடியவில்லை. DD/MM/YYYY முயற்சிக்கவும், அல்லது 'skip' எனத் தட்டச்சு செய்யவும்.",
+    ask_agency_prompt: "இந்த சிக்கலை ஏற்கனவே எந்த நிறுவனத்திடம் புகாரளித்தீர்கள்? (எ.கா. MBJB, SPAN, TNB)",
+    ask_agency_ref_prompt: "அந்த நிறுவனம் கொடுத்த குறிப்பு எண் என்ன?",
+    ask_agency_date_prompt: "ஏறக்குறைய எப்போது அந்த நிறுவனத்திடம் புகாரளித்தீர்கள்? (எ.கா. 15/03/2026 அல்லது 2026-03-15)",
+    agency_date_invalid: "மன்னிக்கவும், தேதியைப் படிக்க முடியவில்லை. DD/MM/YYYY முயற்சிக்கவும், அல்லது இல்லை / NA தட்டவும்.",
+    agency_na_button: "இல்லை / NA",
     consent_prompt:
-      "உங்கள் புகாரைச் சேமிப்பதற்கு முன்:\n\n" +
-      "• தனியுரிமைக் கொள்கை: " + PRIVACY_URL + "\n" +
-      "• தொடர்ந்து செயல்பட நிறுவனத்துடன் வழக்கு விவரங்களை (குறிப்பு எண் உட்பட) பகிரலாம்\n" +
-      "• பொது வரைபடத்தில் வழக்கு தோன்றலாமா என்பதை நீங்கள் தேர்வு செய்யலாம் (பெயர்/தொலைபேசி இல்லை)\n\n" +
-      "உங்கள் தேர்வைத் தட்டவும்:",
-    consent_public_button: "ஒப்புதல் (பொது)",
-    consent_private_button: "ஒப்புதல் (தனி)",
+      "உங்கள் புகாரை அனுப்பும் முன்:\n\n" +
+      "📍 உங்கள் புகார் பொது வரைபடத்தில் ஒரு புள்ளியாகும். பிரச்சினை வகை, பகுதி, நிறுவனம் பதிலளிக்காத காலத்தை மக்கள் பார்க்கலாம்.\n\n" +
+      "🔒 உங்கள் பெயர், தொலைபேசி எண் காட்டப்படாது.\n\n" +
+      "📤 முழு விவரங்கள் தொடர் நடவடிக்கைக்காக நிறுவனத்திற்கு அனுப்பப்படும்.\n\n" +
+      "📷 பணியாளர் ஆய்வுக்குப் பின்னரே படங்கள் காட்டப்படும்.\n\n" +
+      "தனியுரிமை: aduan.sahkan.my/privacy",
+    consent_agree_button: "ஒப்புதல் & அனுப்பு",
+    consent_decline_button: "ஒப்புக்கொள்ளவில்லை",
     consent_invalid: "மேலே உள்ள ஒப்புதல் விருப்பங்களில் ஒன்றைத் தட்டவும்.",
+    consent_decline_confirm:
+      "நீங்கள் ஒப்புக்கொள்ளாவிட்டால், முன்பு அனுப்பிய அனைத்து தகவல்களும் நீக்கப்படும்; புகார் தொடராது.",
+    consent_back_button: "திரும்பி ஒப்புக்கொள்",
+    consent_discard_button: "நீக்கி வெளியேறு",
+    consent_discarded:
+      "நன்றி. உங்கள் எந்த தகவலையும் நாங்கள் சேமிக்கவில்லை.",
     stop_confirm: "எங்களிடமிருந்து செய்திகளை நிறுத்திவிட்டீர்கள். திறந்த வழக்குகள் தொடரும்; மேலும் செய்தி அனுப்பமாட்டோம். பின்னர் புகாரளிக்க புதிய செய்தி அனுப்பவும்.",
     delete_confirm: "உங்கள் தரவு நீக்கக் கோரிக்கை பதிவு செய்யப்பட்டது. அடையாளத்தைச் சரிபார்த்து 21 நாட்களில் முடிப்போம். விவரம்: https://aduan.sahkan.my/data-deletion",
   },
 };
 
 const CATEGORY_LABELS: Record<string, Record<Lang, string>> = {
+  longkang_tersumbat: {
+    ms: "Longkang tersumbat",
+    en: "Clogged drain",
+    zh: "排水沟堵塞",
+    ta: "அடைந்த வடிகால்",
+  },
   jalan_berlubang: { ms: "Jalan berlubang", en: "Pothole", zh: "坑洞", ta: "சாலைக் குழி" },
-  banjir: { ms: "Banjir", en: "Flooding", zh: "水灾", ta: "வெள்ளம்" },
-  lampu_jalan: { ms: "Lampu jalan", en: "Streetlight", zh: "路灯", ta: "தெரு விளக்கு" },
-  sampah: { ms: "Sampah", en: "Rubbish", zh: "垃圾", ta: "குப்பை" },
+  lampu_jalan: {
+    ms: "Lampu jalan rosak",
+    en: "Broken streetlight",
+    zh: "路灯故障",
+    ta: "தெரு விளக்கு பழுது",
+  },
+  sampah: {
+    ms: "Sampah tidak dikutip",
+    en: "Uncollected rubbish",
+    zh: "垃圾未清运",
+    ta: "குப்பை எடுக்கப்படவில்லை",
+  },
+  semak: { ms: "Semak panjang", en: "Overgrown bushes", zh: "杂草过长", ta: "நீண்ட புதர்" },
   lain_lain: { ms: "Lain-lain", en: "Other", zh: "其他", ta: "மற்றவை" },
 };
 
@@ -233,11 +274,18 @@ const supabase = createClient(
 
 const LANGUAGE_MAP: Record<string, string> = { "1": "ms", "2": "en", "3": "zh", "4": "ta" };
 
-const CATEGORIES = ["jalan_berlubang", "banjir", "lampu_jalan", "sampah", "lain_lain"];
+const CATEGORIES = [
+  "longkang_tersumbat",
+  "jalan_berlubang",
+  "lampu_jalan",
+  "sampah",
+  "semak",
+  "lain_lain",
+];
 
 const RESTART_COMMANDS = ["restart", "language", "bahasa", "mula semula"];
 const CATEGORY_COMMANDS = ["category", "kategori"];
-const SKIP_COMMANDS = ["skip", "langkau", "langkan", "-"];
+const SKIP_COMMANDS = ["na", "n/a", "tiada", "tak tahu", "takde", "-", "skip"];
 const STOP_COMMANDS = ["stop", "berhenti"];
 const DELETE_COMMANDS = ["padam", "delete"];
 
@@ -262,6 +310,10 @@ const CLEAR_CATEGORY_ONWARDS = {
 
 function isSkip(text: string | undefined): boolean {
   return !!text && SKIP_COMMANDS.includes(text.trim().toLowerCase());
+}
+
+function isAgencyNaReply(replyId: string | undefined, text: string | undefined): boolean {
+  return replyId === "agency_na" || isSkip(text);
 }
 
 /** Parse rough dates: YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY. */
@@ -396,9 +448,45 @@ function sendDescriptionPrompt(to: string, lang: Lang) {
 
 function sendConsentPrompt(to: string, lang: Lang) {
   return sendButtons(to, STRINGS[lang].consent_prompt, [
-    { id: "consent_public", title: STRINGS[lang].consent_public_button },
-    { id: "consent_private", title: STRINGS[lang].consent_private_button },
+    { id: "consent_agree", title: STRINGS[lang].consent_agree_button },
+    { id: "consent_decline", title: STRINGS[lang].consent_decline_button },
   ]);
+}
+
+function sendAgencyFieldPrompt(to: string, lang: Lang, promptKey: "ask_agency_prompt" | "ask_agency_ref_prompt" | "ask_agency_date_prompt") {
+  return sendButtons(to, STRINGS[lang][promptKey], [
+    { id: "agency_na", title: STRINGS[lang].agency_na_button },
+  ]);
+}
+
+function sendDeclineConfirm(to: string, lang: Lang) {
+  return sendButtons(to, STRINGS[lang].consent_decline_confirm, [
+    { id: "consent_back", title: STRINGS[lang].consent_back_button },
+    { id: "consent_discard", title: STRINGS[lang].consent_discard_button },
+  ]);
+}
+
+async function deleteStagedMedia(session: { photo_url?: string | null; voice_note_url?: string | null }) {
+  if (session.photo_url) {
+    const marker = "/ticket-photos/";
+    const idx = session.photo_url.indexOf(marker);
+    if (idx !== -1) {
+      const path = session.photo_url.slice(idx + marker.length).split("?")[0];
+      const { error } = await supabase.storage.from("ticket-photos").remove([path]);
+      if (error) console.error("Failed to delete staged photo:", JSON.stringify(error));
+    }
+  }
+  if (session.voice_note_url) {
+    const path = session.voice_note_url.split("?")[0];
+    const { error } = await supabase.storage.from("ticket-voice-notes").remove([path]);
+    if (error) console.error("Failed to delete staged voice note:", JSON.stringify(error));
+  }
+}
+
+async function discardIntake(from: string, session: Record<string, any>, lang: Lang) {
+  await sendText(from, STRINGS[lang].consent_discarded);
+  await deleteStagedMedia(session);
+  await supabase.from("conversation_sessions").delete().eq("whatsapp_number", from);
 }
 
 function buildSummary(s: Record<string, any>, lang: Lang): string {
@@ -779,7 +867,7 @@ Deno.serve(async (req) => {
             .from("conversation_sessions")
             .update({ contactable, step: "ask_agency" })
             .eq("whatsapp_number", from);
-          await sendText(from, STRINGS[lang].ask_agency_prompt);
+          await sendAgencyFieldPrompt(from, lang, "ask_agency_prompt");
         } else {
           await sendButtons(from, STRINGS[lang].contact_invalid, [
             { id: "contact_yes", title: STRINGS[lang].yes_button },
@@ -787,75 +875,100 @@ Deno.serve(async (req) => {
           ]);
         }
       } else if (session.step === "ask_agency") {
-        if (text) {
-          const agency = isSkip(text) ? null : text;
+        if (isAgencyNaReply(replyId, text)) {
           await supabase
             .from("conversation_sessions")
-            .update({ agency, step: "ask_agency_ref" })
+            .update({ agency: null, step: "ask_agency_ref" })
             .eq("whatsapp_number", from);
-          await sendText(from, STRINGS[lang].ask_agency_ref_prompt);
+          await sendAgencyFieldPrompt(from, lang, "ask_agency_ref_prompt");
+        } else if (text) {
+          await supabase
+            .from("conversation_sessions")
+            .update({ agency: text, step: "ask_agency_ref" })
+            .eq("whatsapp_number", from);
+          await sendAgencyFieldPrompt(from, lang, "ask_agency_ref_prompt");
         } else {
-          await sendText(from, STRINGS[lang].ask_agency_prompt);
+          await sendAgencyFieldPrompt(from, lang, "ask_agency_prompt");
         }
       } else if (session.step === "ask_agency_ref") {
-        if (text) {
-          const agency_ref = isSkip(text) ? null : text;
+        if (isAgencyNaReply(replyId, text)) {
           await supabase
             .from("conversation_sessions")
-            .update({ agency_ref, step: "ask_agency_date" })
+            .update({ agency_ref: null, step: "ask_agency_date" })
             .eq("whatsapp_number", from);
-          await sendText(from, STRINGS[lang].ask_agency_date_prompt);
+          await sendAgencyFieldPrompt(from, lang, "ask_agency_date_prompt");
+        } else if (text) {
+          await supabase
+            .from("conversation_sessions")
+            .update({ agency_ref: text, step: "ask_agency_date" })
+            .eq("whatsapp_number", from);
+          await sendAgencyFieldPrompt(from, lang, "ask_agency_date_prompt");
         } else {
-          await sendText(from, STRINGS[lang].ask_agency_ref_prompt);
+          await sendAgencyFieldPrompt(from, lang, "ask_agency_ref_prompt");
         }
       } else if (session.step === "ask_agency_date") {
-        if (text) {
-          if (isSkip(text)) {
+        if (isAgencyNaReply(replyId, text)) {
+          await supabase
+            .from("conversation_sessions")
+            .update({ agency_reported_at: null, step: "ask_consent" })
+            .eq("whatsapp_number", from);
+          await sendConsentPrompt(from, lang);
+        } else if (text) {
+          const parsed = parseAgencyDate(text);
+          if (!parsed) {
+            await sendText(from, STRINGS[lang].agency_date_invalid);
+            await sendAgencyFieldPrompt(from, lang, "ask_agency_date_prompt");
+          } else {
             await supabase
               .from("conversation_sessions")
-              .update({ agency_reported_at: null, step: "ask_consent" })
+              .update({ agency_reported_at: parsed, step: "ask_consent" })
               .eq("whatsapp_number", from);
             await sendConsentPrompt(from, lang);
-          } else {
-            const parsed = parseAgencyDate(text);
-            if (!parsed) {
-              await sendText(from, STRINGS[lang].agency_date_invalid);
-            } else {
-              await supabase
-                .from("conversation_sessions")
-                .update({ agency_reported_at: parsed, step: "ask_consent" })
-                .eq("whatsapp_number", from);
-              await sendConsentPrompt(from, lang);
-            }
           }
         } else {
-          await sendText(from, STRINGS[lang].ask_agency_date_prompt);
+          await sendAgencyFieldPrompt(from, lang, "ask_agency_date_prompt");
         }
       } else if (session.step === "ask_consent") {
-        if (replyId === "consent_public" || replyId === "consent_private") {
-          const public_display_opt_out = replyId === "consent_private";
-          const publish_agency_ref = replyId === "consent_public";
+        if (replyId === "consent_agree") {
           const consent_given_at = new Date().toISOString();
           const updated = {
             ...session,
-            public_display_opt_out,
-            publish_agency_ref,
+            public_display_opt_out: false,
+            publish_agency_ref: true,
             consent_given_at,
             consent_version: CONSENT_VERSION,
           };
           await supabase
             .from("conversation_sessions")
             .update({
-              public_display_opt_out,
-              publish_agency_ref,
+              public_display_opt_out: false,
+              publish_agency_ref: true,
               consent_given_at,
               consent_version: CONSENT_VERSION,
             })
             .eq("whatsapp_number", from);
           await handleSubmit(from, updated, lang, message.id, profileName);
+        } else if (replyId === "consent_decline") {
+          await supabase
+            .from("conversation_sessions")
+            .update({ step: "ask_consent_decline" })
+            .eq("whatsapp_number", from);
+          await sendDeclineConfirm(from, lang);
         } else {
           await sendConsentPrompt(from, lang);
           await sendText(from, STRINGS[lang].consent_invalid);
+        }
+      } else if (session.step === "ask_consent_decline") {
+        if (replyId === "consent_back") {
+          await supabase
+            .from("conversation_sessions")
+            .update({ step: "ask_consent" })
+            .eq("whatsapp_number", from);
+          await sendConsentPrompt(from, lang);
+        } else if (replyId === "consent_discard") {
+          await discardIntake(from, session, lang);
+        } else {
+          await sendDeclineConfirm(from, lang);
         }
       } else {
         await sendText(from, `(next step: ${session.step}, coming soon)`);

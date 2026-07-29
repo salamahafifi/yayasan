@@ -27,19 +27,21 @@ const MAP_MAX_BOUNDS: [[number, number], [number, number]] = [
 ];
 
 const CATEGORY_COLORS: Record<IssueCategory, string> = {
-  jalan_berlubang: '#dc2626',
-  banjir: '#2563eb',
-  lampu_jalan: '#f59e0b',
-  sampah: '#16a34a',
-  bantuan_kebajikan: '#7c3aed',
-  lain_lain: '#6b7280',
+  // Against #1B4332 chrome: vary hue AND lightness for colour-blind distinguishability
+  longkang_tersumbat: '#0E7490', // deep teal
+  jalan_berlubang: '#B45309', // dark amber
+  lampu_jalan: '#CA8A04', // gold / light amber
+  sampah: '#6D28D9', // violet
+  semak: '#166534', // mid green
+  lain_lain: '#57534E', // warm stone grey
 };
 
 const LEGEND_CATEGORIES: IssueCategory[] = [
+  'longkang_tersumbat',
   'jalan_berlubang',
-  'banjir',
   'lampu_jalan',
   'sampah',
+  'semak',
   'lain_lain',
 ];
 
@@ -218,7 +220,7 @@ function App() {
                 center={[group.latitude, group.longitude]}
                 radius={markerRadius(group.complainantCount)}
                 pathOptions={{
-                  color: CATEGORY_COLORS[group.category],
+                  color: '#FFFFFF',
                   fillColor: CATEGORY_COLORS[group.category],
                   fillOpacity: 0.85,
                   weight: 2,
@@ -234,19 +236,7 @@ function App() {
 
         {panelOpen ? (
           <div className="map-overlay">
-            <div className="map-overlay__toolbar">
-              <button
-                type="button"
-                className="map-overlay__toggle"
-                onClick={() => setPanelOpen(false)}
-                aria-label={t.hidePanel}
-                aria-expanded={true}
-                title={t.hidePanel}
-              >
-                −
-              </button>
-            </div>
-            <TicketLookup lang={lang} />
+            <TicketLookup lang={lang} onMinimize={() => setPanelOpen(false)} />
             {loading && <p className="map-overlay__status">{t.loading}</p>}
             {error && <p className="map-overlay__error">{error}</p>}
             {!loading && !error && (
