@@ -1,12 +1,15 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { CircleMarker, MapContainer, TileLayer, useMapEvents } from 'react-leaflet';
 import { supabase } from '../lib/supabase';
-import { CATEGORY_LABELS, STATUS_LABELS, formatDate } from '../lib/format';
+import { CATEGORY_LABELS, PRIORITY_LABELS, STATUS_LABELS, formatDate } from '../lib/format';
+import { normalizeTicketPhotoPath } from '../lib/photos';
 import {
   STAFF_TICKET_COLUMNS,
   VIEWER_TICKET_COLUMNS,
   daysOutstandingFromAgencyReport,
   type CaseNote,
+  type IssueCategory,
+  type PriorityLevel,
   type SafeTicket,
   type StaffDirectoryEntry,
   type StaffProfile,
@@ -17,6 +20,8 @@ import {
 } from '../types/database';
 
 const STATUS_OPTIONS: TicketStatus[] = ['baru', 'siasat', 'majlis_perbandaran', 'selesai', 'tangguh'];
+const CATEGORY_OPTIONS = Object.keys(CATEGORY_LABELS) as IssueCategory[];
+const PRIORITY_OPTIONS = Object.keys(PRIORITY_LABELS) as PriorityLevel[];
 const FALLBACK_CENTER: [number, number] = [1.5146529, 103.6854368];
 
 type CaseDrawerProps = {
@@ -24,6 +29,19 @@ type CaseDrawerProps = {
   profile: StaffProfile;
   onClose: () => void;
   onChanged: () => void;
+};
+
+type AdminDraft = {
+  name: string;
+  contact_number: string;
+  description: string;
+  category: IssueCategory;
+  adun_priority: PriorityLevel;
+  agency: string;
+  agency_ref: string;
+  agency_reported_at: string;
+  address_text: string;
+  is_public: boolean;
 };
 
 function PinPicker({ onPick }: { onPick: (latitude: number, longitude: number) => void }) {
@@ -35,8 +53,24 @@ function PinPicker({ onPick }: { onPick: (latitude: number, longitude: number) =
   return null;
 }
 
+function draftFromTicket(ticket: Ticket): AdminDraft {
+  return {
+    name: ticket.name ?? '',
+    contact_number: ticket.contact_number ?? '',
+    description: ticket.description ?? '',
+    category: ticket.category,
+    adun_priority: ticket.adun_priority,
+    agency: ticket.agency ?? '',
+    agency_ref: ticket.agency_ref ?? '',
+    agency_reported_at: ticket.agency_reported_at ?? '',
+    address_text: ticket.address_text ?? '',
+    is_public: ticket.is_public,
+  };
+}
+
 function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) {
   const canEdit = profile.role === 'staff' || profile.role === 'admin';
+  const canAdmin = profile.role === 'admin';
   const [ticket, setTicket] = useState<Ticket | SafeTicket | null>(null);
   const [directory, setDirectory] = useState<StaffDirectoryEntry[]>([]);
   const [notes, setNotes] = useState<CaseNote[]>([]);
@@ -48,14 +82,31 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
   const [saving, setSaving] = useState(false);
   const [photoBusyId, setPhotoBusyId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [photoHint, setPhotoHint] = useState<string | null>(null);
+  const [draft, setDraft] = useState<AdminDraft | null>(null);
 
   const loadPhotoUrls = useCallback(async (rows: TicketPhoto[]) => {
     const signed = await Promise.all(
       rows.map(async (photo) => {
+        const storagePath = normalizeTicketPhotoPath(photo.storage_path);
         const { data, error: signError } = await supabase.storage
           .from('ticket-photos')
-          .createSignedUrl(photo.storage_path, 60);
-        return { ...photo, signed_url: signError ? undefined : data.signedUrl };
+          .createSignedUrl(storagePath, 60);
+
+        if (!signError && data?.signedUrl) {
+          return { ...photo, storage_path: storagePath, signed_url: data.signedUrl };
+        }
+
+        // Approved copies can still preview from the public bucket if the
+        // private object path is stale or unreadable.
+        if (photo.public_path) {
+          const { data: pub } = supabase.storage
+            .from('ticket-photos-public')
+            .getPublicUrl(photo.public_path);
+          return { ...photo, storage_path: storagePath, signed_url: pub.publicUrl };
+        }
+
+        return { ...photo, storage_path: storagePath, signed_url: undefined };
       }),
     );
     setPhotos(signed);
@@ -64,6 +115,7 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setPhotoHint(null);
     const ticketResult = canEdit
       ? await supabase.from('tickets').select(STAFF_TICKET_COLUMNS).eq('id', ticketId).single()
       : await supabase.from('staff_tickets_safe').select(VIEWER_TICKET_COLUMNS).eq('id', ticketId).single();
@@ -79,6 +131,9 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
     if (loadedTicket.latitude != null && loadedTicket.longitude != null) {
       setPendingPin([loadedTicket.latitude, loadedTicket.longitude]);
     }
+    if (canAdmin && 'description' in loadedTicket) {
+      setDraft(draftFromTicket(loadedTicket as Ticket));
+    }
 
     const { data: staffRows } = await supabase
       .from('active_staff_directory')
@@ -88,6 +143,24 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
 
     if (canEdit) {
       const fullTicket = loadedTicket as Ticket;
+      const rootId = fullTicket.parent_ticket_id ?? fullTicket.id;
+
+      // Photos may sit on a linked child report while the table shows the parent.
+      const { data: familyRows, error: familyError } = await supabase
+        .from('tickets')
+        .select('id, photo_url')
+        .or(`id.eq.${rootId},parent_ticket_id.eq.${rootId}`);
+
+      if (familyError) {
+        setError(familyError.message);
+      }
+
+      const family = (familyRows ?? [{ id: fullTicket.id, photo_url: fullTicket.photo_url }]) as {
+        id: number;
+        photo_url: string | null;
+      }[];
+      const familyIds = family.map((row) => row.id);
+
       const [noteResult, photoResult, messageResult] = await Promise.all([
         supabase
           .from('case_notes_with_author')
@@ -97,9 +170,9 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
         supabase
           .from('ticket_photos')
           .select('id, ticket_id, storage_path, public_path, is_public, sort_order, created_at')
-          .eq('ticket_id', ticketId)
-          .order('sort_order')
-          .order('created_at'),
+          .in('ticket_id', familyIds)
+          .order('sort_order', { ascending: true })
+          .order('created_at', { ascending: true }),
         fullTicket.contact_number
           ? supabase
             .from('whatsapp_messages')
@@ -110,28 +183,87 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
       ]);
 
       if (noteResult.error || photoResult.error || messageResult.error) {
-        setError(noteResult.error?.message ?? photoResult.error?.message ?? messageResult.error?.message ?? null);
+        setError(
+          noteResult.error?.message
+            ?? photoResult.error?.message
+            ?? messageResult.error?.message
+            ?? null,
+        );
       }
+
+      let photoRows = (photoResult.data ?? []) as TicketPhoto[];
+
+      // Legacy tickets.photo_url with no ticket_photos row — still previewable.
+      if (photoRows.length === 0) {
+        const legacy: TicketPhoto[] = [];
+        for (const row of family) {
+          if (!row.photo_url) continue;
+          const path = normalizeTicketPhotoPath(row.photo_url);
+          if (!path) continue;
+          legacy.push({
+            id: -row.id,
+            ticket_id: row.id,
+            storage_path: path,
+            public_path: null,
+            is_public: false,
+            sort_order: 0,
+            created_at: fullTicket.created_at,
+          });
+        }
+        photoRows = legacy;
+        if (legacy.length > 0) {
+          setPhotoHint('Showing legacy photo_url. Publish will register it in ticket_photos.');
+        }
+      }
+
+      if (photoRows.length === 0) {
+        setPhotoHint(
+          'No rows in ticket_photos for this case family. Web uploads need the submit-web-complaint function deployed; WhatsApp photos need a successful media save.',
+        );
+      }
+
       setNotes((noteResult.data ?? []) as CaseNote[]);
-      await loadPhotoUrls((photoResult.data ?? []) as TicketPhoto[]);
+      await loadPhotoUrls(photoRows);
       setMessages((messageResult.data ?? []) as WhatsAppMessage[]);
     }
     setLoading(false);
-  }, [canEdit, loadPhotoUrls, ticketId]);
+  }, [canAdmin, canEdit, loadPhotoUrls, ticketId]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
+  const photosRef = useRef(photos);
+  photosRef.current = photos;
+
   useEffect(() => {
-    if (!canEdit || photos.length === 0) return;
+    if (!canEdit) return;
     const timer = window.setInterval(() => {
-      void loadPhotoUrls(photos);
+      if (photosRef.current.length === 0) return;
+      void loadPhotoUrls(photosRef.current);
     }, 50_000);
     return () => window.clearInterval(timer);
-  }, [canEdit, loadPhotoUrls, photos]);
+  }, [canEdit, loadPhotoUrls]);
 
-  async function updateTicket(patch: Partial<Pick<Ticket, 'status' | 'assigned_to'>>) {
+  async function updateTicket(
+    patch: Partial<
+      Pick<
+        Ticket,
+        | 'status'
+        | 'assigned_to'
+        | 'name'
+        | 'contact_number'
+        | 'description'
+        | 'category'
+        | 'adun_priority'
+        | 'agency'
+        | 'agency_ref'
+        | 'agency_reported_at'
+        | 'address_text'
+        | 'is_public'
+      >
+    >,
+  ) {
     if (!canEdit || !ticket) return;
     setSaving(true);
     const { error: updateError } = await supabase.from('tickets').update(patch).eq('id', ticket.id);
@@ -142,6 +274,51 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
     }
     setTicket({ ...ticket, ...patch });
     onChanged();
+  }
+
+  async function saveAdminEdits(event: FormEvent) {
+    event.preventDefault();
+    if (!canAdmin || !ticket || !draft || !('description' in ticket)) return;
+    setSaving(true);
+    setError(null);
+    const patch = {
+      name: draft.name.trim() || null,
+      contact_number: draft.contact_number.trim() || null,
+      description: draft.description.trim() || null,
+      category: draft.category,
+      adun_priority: draft.adun_priority,
+      agency: draft.agency.trim() || null,
+      agency_ref: draft.agency_ref.trim() || null,
+      agency_reported_at: draft.agency_reported_at || null,
+      address_text: draft.address_text.trim() || null,
+      is_public: draft.is_public,
+    };
+    const { error: updateError } = await supabase.from('tickets').update(patch).eq('id', ticket.id);
+    setSaving(false);
+    if (updateError) {
+      setError(updateError.message);
+      return;
+    }
+    setTicket({ ...ticket, ...patch });
+    onChanged();
+  }
+
+  async function deleteCase() {
+    if (!canAdmin || !ticket) return;
+    const ok = window.confirm(
+      `Padam kes ${ticket.ticket_number}? Ini tidak boleh dibuat asal semula.`,
+    );
+    if (!ok) return;
+    setSaving(true);
+    setError(null);
+    const { error: deleteError } = await supabase.from('tickets').delete().eq('id', ticket.id);
+    setSaving(false);
+    if (deleteError) {
+      setError(deleteError.message);
+      return;
+    }
+    onChanged();
+    onClose();
   }
 
   async function addNote(event: FormEvent) {
@@ -165,17 +342,39 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
 
   async function togglePhoto(photo: TicketPhoto, publish: boolean) {
     if (!canEdit || !ticket || photoBusyId != null) return;
-    if (publish === photo.is_public) return;
+    if (publish === photo.is_public && photo.id > 0) return;
 
     setPhotoBusyId(photo.id);
     setError(null);
 
+    let working = photo;
+
+    // Legacy photo_url rows use a negative id until registered in ticket_photos.
+    if (working.id < 0 && publish) {
+      const path = normalizeTicketPhotoPath(working.storage_path);
+      const { data: inserted, error: insertError } = await supabase
+        .from('ticket_photos')
+        .insert({
+          ticket_id: working.ticket_id,
+          storage_path: path,
+          sort_order: 0,
+        })
+        .select('id, ticket_id, storage_path, public_path, is_public, sort_order, created_at')
+        .single();
+      if (insertError || !inserted) {
+        setError(insertError?.message ?? 'Unable to register legacy photo.');
+        setPhotoBusyId(null);
+        return;
+      }
+      working = inserted as TicketPhoto;
+    }
+
     if (publish) {
-      const fileName = photo.storage_path.split('/').pop() ?? `${photo.id}.jpg`;
-      const publicPath = `${ticket.id}/${photo.id}-${fileName}`;
+      const fileName = working.storage_path.split('/').pop() ?? `${working.id}.jpg`;
+      const publicPath = `${working.ticket_id}/${working.id}-${fileName}`;
       const { data: signed, error: signError } = await supabase.storage
         .from('ticket-photos')
-        .createSignedUrl(photo.storage_path, 60);
+        .createSignedUrl(normalizeTicketPhotoPath(working.storage_path), 60);
       if (signError) {
         setError(signError.message);
         setPhotoBusyId(null);
@@ -202,36 +401,28 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
       const { error: rowError } = await supabase
         .from('ticket_photos')
         .update({ public_path: publicPath, is_public: true })
-        .eq('id', photo.id);
+        .eq('id', working.id);
       if (rowError) {
         await supabase.storage.from('ticket-photos-public').remove([publicPath]);
         setError(rowError.message);
         setPhotoBusyId(null);
         return;
       }
-    } else if (photo.public_path) {
-      const { error: removeError } = await supabase.storage
-        .from('ticket-photos-public')
-        .remove([photo.public_path]);
-      if (removeError) {
-        setError(removeError.message);
-        setPhotoBusyId(null);
-        return;
+    } else if (working.id > 0) {
+      if (working.public_path) {
+        const { error: removeError } = await supabase.storage
+          .from('ticket-photos-public')
+          .remove([working.public_path]);
+        if (removeError) {
+          setError(removeError.message);
+          setPhotoBusyId(null);
+          return;
+        }
       }
       const { error: rowError } = await supabase
         .from('ticket_photos')
         .update({ public_path: null, is_public: false })
-        .eq('id', photo.id);
-      if (rowError) {
-        setError(rowError.message);
-        setPhotoBusyId(null);
-        return;
-      }
-    } else {
-      const { error: rowError } = await supabase
-        .from('ticket_photos')
-        .update({ public_path: null, is_public: false })
-        .eq('id', photo.id);
+        .eq('id', working.id);
       if (rowError) {
         setError(rowError.message);
         setPhotoBusyId(null);
@@ -323,13 +514,15 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
                 <h3>Resident photos</h3>
                 <p className="case-help">
                   Choose which photos appear on the public map. Unpublished photos stay staff-only.
+                  Photos from linked reports in this case are included.
                 </p>
+                {photoHint && <p className="case-help">{photoHint}</p>}
                 <div className="case-photos">
                   {photos.map((photo) => {
                     const busy = photoBusyId === photo.id;
                     return (
                       <figure
-                        key={photo.id}
+                        key={`${photo.ticket_id}-${photo.id}`}
                         className={`case-photo${photo.is_public ? ' case-photo--published' : ''}`}
                       >
                         {photo.signed_url
@@ -371,6 +564,115 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
               </section>
             )}
 
+            {canAdmin && draft && (
+              <section className="case-section">
+                <h3>Edit case</h3>
+                <p className="case-help">Admin only. Changes save to the live ticket record.</p>
+                <form className="case-edit-form" onSubmit={(event) => void saveAdminEdits(event)}>
+                  <label>
+                    Name
+                    <input
+                      value={draft.name}
+                      onChange={(event) => setDraft({ ...draft, name: event.target.value })}
+                    />
+                  </label>
+                  <label>
+                    Phone
+                    <input
+                      value={draft.contact_number}
+                      onChange={(event) => setDraft({ ...draft, contact_number: event.target.value })}
+                    />
+                  </label>
+                  <label className="case-edit-form__full">
+                    Description
+                    <textarea
+                      rows={4}
+                      value={draft.description}
+                      onChange={(event) => setDraft({ ...draft, description: event.target.value })}
+                    />
+                  </label>
+                  <label>
+                    Category
+                    <select
+                      value={draft.category}
+                      onChange={(event) =>
+                        setDraft({ ...draft, category: event.target.value as IssueCategory })
+                      }
+                    >
+                      {CATEGORY_OPTIONS.map((category) => (
+                        <option key={category} value={category}>{CATEGORY_LABELS[category]}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Priority
+                    <select
+                      value={draft.adun_priority}
+                      onChange={(event) =>
+                        setDraft({ ...draft, adun_priority: event.target.value as PriorityLevel })
+                      }
+                    >
+                      {PRIORITY_OPTIONS.map((priority) => (
+                        <option key={priority} value={priority}>{PRIORITY_LABELS[priority]}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Agency
+                    <input
+                      value={draft.agency}
+                      onChange={(event) => setDraft({ ...draft, agency: event.target.value })}
+                    />
+                  </label>
+                  <label>
+                    Agency ref
+                    <input
+                      value={draft.agency_ref}
+                      onChange={(event) => setDraft({ ...draft, agency_ref: event.target.value })}
+                    />
+                  </label>
+                  <label>
+                    Agency date
+                    <input
+                      type="date"
+                      value={draft.agency_reported_at}
+                      onChange={(event) =>
+                        setDraft({ ...draft, agency_reported_at: event.target.value })
+                      }
+                    />
+                  </label>
+                  <label className="case-edit-form__full">
+                    Address
+                    <input
+                      value={draft.address_text}
+                      onChange={(event) => setDraft({ ...draft, address_text: event.target.value })}
+                    />
+                  </label>
+                  <label className="case-edit-form__check">
+                    <input
+                      type="checkbox"
+                      checked={draft.is_public}
+                      onChange={(event) => setDraft({ ...draft, is_public: event.target.checked })}
+                    />
+                    Show on public map
+                  </label>
+                  <div className="case-edit-form__actions">
+                    <button type="submit" className="btn btn--primary" disabled={saving}>
+                      {saving ? 'Saving…' : 'Save changes'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn--danger"
+                      disabled={saving}
+                      onClick={() => void deleteCase()}
+                    >
+                      Delete case
+                    </button>
+                  </div>
+                </form>
+              </section>
+            )}
+
             <section className="case-section">
               <h3>Full case</h3>
               <dl className="case-fields">
@@ -386,6 +688,7 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
                 <dd>{ticket.latitude == null ? 'Needs location' : `${ticket.latitude.toFixed(6)}, ${ticket.longitude?.toFixed(6)}`}</dd>
                 <dt>Location source</dt><dd>{ticket.location_source ?? '—'}</dd>
                 <dt>Days outstanding</dt><dd>{days ?? '—'}</dd>
+                <dt>Public map</dt><dd>{ticket.is_public ? 'Yes' : 'No'}</dd>
               </dl>
             </section>
 

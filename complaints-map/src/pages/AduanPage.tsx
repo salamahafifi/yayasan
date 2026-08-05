@@ -12,7 +12,6 @@ import {
 } from '../lib/aduanSteps';
 import StepCategory from './aduan/StepCategory';
 import StepLocation from './aduan/StepLocation';
-import FeedbackLink from '../components/FeedbackLink';
 import { canProceedFromLocation } from '../lib/location';
 import StepDetails from './aduan/StepDetails';
 import StepPriorReport from './aduan/StepPriorReport';
@@ -234,8 +233,6 @@ export function AduanStepPage() {
             />
           )}
         </nav>
-
-        <FeedbackLink lang={lang} variant="inline" />
       </div>
     </div>
   );

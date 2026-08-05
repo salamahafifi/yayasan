@@ -30,6 +30,10 @@ export type TicketStatusResult = {
   status: TicketStatus;
   first_reported_at: string | null;
   days_outstanding: number | null;
+  /** Rounded like public_tickets; null when the case still needs a pin. */
+  latitude: number | null;
+  longitude: number | null;
+  root_ticket_id: number;
 };
 
 /** Row from public_ticket_photos (staff-approved only). */

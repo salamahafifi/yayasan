@@ -6,12 +6,21 @@ import type { TicketStatusResult } from '../types/database';
 
 type LookupState = 'idle' | 'loading' | 'found' | 'not_found' | 'error';
 
+export type TicketLocateTarget = {
+  latitude: number;
+  longitude: number;
+  rootTicketId: number;
+  ticketNumber: string;
+};
+
 type TicketLookupProps = {
   lang: Lang;
   onMinimize?: () => void;
+  /** Fired after a successful Semak search so the map can focus the pin. */
+  onLocate?: (target: TicketLocateTarget | null) => void;
 };
 
-function TicketLookup({ lang, onMinimize }: TicketLookupProps) {
+function TicketLookup({ lang, onMinimize, onLocate }: TicketLookupProps) {
   const [input, setInput] = useState('');
   const [state, setState] = useState<LookupState>('idle');
   const [result, setResult] = useState<TicketStatusResult | null>(null);
@@ -24,6 +33,7 @@ function TicketLookup({ lang, onMinimize }: TicketLookupProps) {
 
     setState('loading');
     setQueriedNumber(ticketNumber);
+    onLocate?.(null);
 
     const { data, error } = await supabase.rpc('get_ticket_status', {
       p_ticket_number: ticketNumber,
@@ -42,8 +52,25 @@ function TicketLookup({ lang, onMinimize }: TicketLookupProps) {
       return;
     }
 
-    setResult(row as TicketStatusResult);
+    const found = row as TicketStatusResult;
+    setResult(found);
     setState('found');
+
+    if (
+      found.latitude != null &&
+      found.longitude != null &&
+      Number.isFinite(found.latitude) &&
+      Number.isFinite(found.longitude)
+    ) {
+      onLocate?.({
+        latitude: found.latitude,
+        longitude: found.longitude,
+        rootTicketId: found.root_ticket_id,
+        ticketNumber,
+      });
+    } else {
+      onLocate?.(null);
+    }
   }
 
   return (
@@ -104,6 +131,9 @@ function TicketLookup({ lang, onMinimize }: TicketLookupProps) {
             <strong>{t(lang, 'daysOutstanding')}:</strong>{' '}
             {result.days_outstanding == null ? '—' : result.days_outstanding}
           </p>
+          {result.latitude == null || result.longitude == null ? (
+            <p className="ticket-lookup__message">{t(lang, 'lookupNoMapPin')}</p>
+          ) : null}
         </div>
       )}
     </div>

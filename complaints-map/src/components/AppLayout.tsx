@@ -37,9 +37,9 @@ export default function AppLayout() {
   const [lang, setLang] = useState<Lang>(readStoredLang);
   const { pathname } = useLocation();
   const showNavActions = !pathname.startsWith('/aduan');
-  // Form steps already carry a quiet feedback link; the full footer only
-  // belongs on the map and status pages where people are not mid-flow.
-  const showFooter = !pathname.startsWith('/aduan');
+  // Full legal footer on map/status; form routes keep a slim strip so the
+  // technical-feedback link stays findable without the whole chrome.
+  const isAduanRoute = pathname.startsWith('/aduan');
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -94,7 +94,11 @@ export default function AppLayout() {
 
       <Outlet context={{ lang, setLang } satisfies AppOutletContext} />
 
-      {showFooter && (
+      {isAduanRoute ? (
+        <footer className="app-footer app-footer--compact">
+          <FeedbackLink lang={lang} variant="block" />
+        </footer>
+      ) : (
         <footer className="app-footer">
           <p className="app-footer__managed">{t(lang, 'managedBy')}</p>
           <nav className="app-footer__links" aria-label="Legal">

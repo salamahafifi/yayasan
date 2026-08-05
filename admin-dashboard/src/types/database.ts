@@ -34,6 +34,8 @@ export type Ticket = {
   language: InputLanguage;
   category: IssueCategory;
   description: string | null;
+  /** Legacy single photo path/URL; prefer ticket_photos rows. */
+  photo_url: string | null;
   voice_note_url: string | null;
   latitude: number | null;
   longitude: number | null;
@@ -85,7 +87,7 @@ export type SafeTicket = {
 };
 
 export const STAFF_TICKET_COLUMNS =
-  'id, ticket_number, contact_number, name, language, category, description, voice_note_url, latitude, longitude, address_text, location_source, needs_location, status, adun_priority, is_public, parent_ticket_id, upvote_count, contactable, agency, agency_ref, agency_reported_at, publish_agency_ref, public_display_opt_out, messaging_opted_out, consent_given_at, consent_version, assigned_to, source, source_message_id, created_at, updated_at';
+  'id, ticket_number, contact_number, name, language, category, description, photo_url, voice_note_url, latitude, longitude, address_text, location_source, needs_location, status, adun_priority, is_public, parent_ticket_id, upvote_count, contactable, agency, agency_ref, agency_reported_at, publish_agency_ref, public_display_opt_out, messaging_opted_out, consent_given_at, consent_version, assigned_to, source, source_message_id, created_at, updated_at';
 
 export const VIEWER_TICKET_COLUMNS =
   'id, ticket_number, language, category, latitude, longitude, address_text, location_source, needs_location, status, adun_priority, is_public, parent_ticket_id, upvote_count, agency, agency_ref, agency_reported_at, days_outstanding, assigned_to, created_at, updated_at';

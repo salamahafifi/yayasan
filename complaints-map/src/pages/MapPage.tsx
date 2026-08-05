@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
+import type { CircleMarker as LeafletCircleMarker } from 'leaflet';
 import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { publicTicketPhotoUrl, supabase } from '../lib/supabase';
@@ -12,7 +13,7 @@ import {
   type Lang,
 } from '../i18n';
 import { categoryColor, token } from '../lib/tokens';
-import TicketLookup from '../components/TicketLookup';
+import TicketLookup, { type TicketLocateTarget } from '../components/TicketLookup';
 import PhotoGallery from '../components/PhotoGallery';
 import type { AppOutletContext } from '../components/AppLayout';
 import { PUBLIC_TICKET_COLUMNS, type IssueCategory, type PublicTicket } from '../types/database';
@@ -53,6 +54,65 @@ function MapResizeHandler() {
   }, [map]);
 
   return null;
+}
+
+/** Fly to a Semak result and keep the pin readable above the cluster. */
+function LocateOnMap({ target }: { target: TicketLocateTarget | null }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!target) return;
+    map.flyTo([target.latitude, target.longitude], 16, { duration: 0.85 });
+  }, [map, target]);
+
+  return null;
+}
+
+function GroupMarker({
+  group,
+  lang,
+  highlighted,
+}: {
+  group: TicketGroup;
+  lang: Lang;
+  highlighted: boolean;
+}) {
+  const markerRef = useRef<LeafletCircleMarker | null>(null);
+
+  useEffect(() => {
+    if (!highlighted) return;
+    const timer = window.setTimeout(() => {
+      markerRef.current?.openPopup();
+    }, 900);
+    return () => window.clearTimeout(timer);
+  }, [highlighted, group.key]);
+
+  return (
+    <CircleMarker
+      ref={markerRef}
+      center={[group.latitude, group.longitude]}
+      radius={highlighted ? markerRadius(group.complainantCount) + 4 : markerRadius(group.complainantCount)}
+      pathOptions={{
+        color: highlighted ? token('--color-primary-blue') : token('--color-marker-stroke'),
+        fillColor: categoryColor(group.category),
+        fillOpacity: highlighted ? 1 : 0.85,
+        weight: highlighted ? 3 : 2,
+      }}
+      eventHandlers={
+        highlighted
+          ? {
+              add: (event) => {
+                event.target.bringToFront();
+              },
+            }
+          : undefined
+      }
+    >
+      <Popup>
+        <TicketPopup group={group} lang={lang} />
+      </Popup>
+    </CircleMarker>
+  );
 }
 
 function markerRadius(complainantCount: number): number {
@@ -99,6 +159,7 @@ export default function MapPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [panelOpen, setPanelOpen] = useState(true);
+  const [locateTarget, setLocateTarget] = useState<TicketLocateTarget | null>(null);
 
   const groups = useMemo(
     () => groupMappableTickets(tickets.filter(isMappable), photosByRootId),
@@ -108,6 +169,17 @@ export default function MapPage() {
     () => tickets.filter((ticket) => ticket.needs_location).length,
     [tickets],
   );
+
+  const highlightedGroupKey = useMemo(() => {
+    if (!locateTarget) return null;
+    const match = groups.find(
+      (group) =>
+        group.ticketId === locateTarget.rootTicketId ||
+        (Math.abs(group.latitude - locateTarget.latitude) < 0.00015 &&
+          Math.abs(group.longitude - locateTarget.longitude) < 0.00015),
+    );
+    return match?.key ?? null;
+  }, [groups, locateTarget]);
 
   useEffect(() => {
     let cancelled = false;
@@ -179,33 +251,47 @@ export default function MapPage() {
           style={{ height: '100%', width: '100%' }}
         >
           <MapResizeHandler />
+          <LocateOnMap target={locateTarget} />
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
           {groups.map((group) => (
-            <CircleMarker
+            <GroupMarker
               key={group.key}
-              center={[group.latitude, group.longitude]}
-              radius={markerRadius(group.complainantCount)}
+              group={group}
+              lang={lang}
+              highlighted={highlightedGroupKey === group.key}
+            />
+          ))}
+          {/* Semak can return a pin that is not yet on the public map
+              (e.g. not marked public). Still show a temporary highlight. */}
+          {locateTarget && highlightedGroupKey == null && (
+            <CircleMarker
+              center={[locateTarget.latitude, locateTarget.longitude]}
+              radius={12}
               pathOptions={{
-                color: token('--color-marker-stroke'),
-                fillColor: categoryColor(group.category),
-                fillOpacity: 0.85,
-                weight: 2,
+                color: token('--color-primary-blue'),
+                fillColor: token('--color-primary-blue'),
+                fillOpacity: 0.9,
+                weight: 3,
               }}
             >
               <Popup>
-                <TicketPopup group={group} lang={lang} />
+                <strong>{locateTarget.ticketNumber}</strong>
               </Popup>
             </CircleMarker>
-          ))}
+          )}
         </MapContainer>
       </div>
 
       {panelOpen ? (
         <div className="map-overlay">
-          <TicketLookup lang={lang} onMinimize={() => setPanelOpen(false)} />
+          <TicketLookup
+            lang={lang}
+            onMinimize={() => setPanelOpen(false)}
+            onLocate={setLocateTarget}
+          />
           {loading && <p className="map-overlay__status">{t(lang, 'loading')}</p>}
           {error && <p className="map-overlay__error">{error}</p>}
           {!loading && !error && (

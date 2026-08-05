@@ -578,6 +578,61 @@ body,
   background: color-mix(in srgb, var(--color-primary-blue) 8%, transparent);
 }
 
+.btn--danger {
+  color: #fff;
+  background: #b42318;
+  border-color: #b42318;
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: #912018;
+}
+
+.case-edit-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+}
+
+.case-edit-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.case-edit-form input,
+.case-edit-form select,
+.case-edit-form textarea {
+  font: inherit;
+  color: var(--color-text);
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+}
+
+.case-edit-form__full {
+  grid-column: 1 / -1;
+}
+
+.case-edit-form__check {
+  grid-column: 1 / -1;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px !important;
+  color: var(--color-text) !important;
+}
+
+.case-edit-form__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
 .case-help {
   color: var(--color-text-muted);
   font-size: 0.82rem;
@@ -706,6 +761,10 @@ body,
 
 @media (max-width: 640px) {
   .case-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .case-edit-form {
     grid-template-columns: 1fr;
   }
 
