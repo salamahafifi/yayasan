@@ -8,10 +8,19 @@ import type { IssueCategory } from '../types/database';
 
 export type LocationSource = 'pin' | 'geocoded' | null;
 
+export type VoiceNote = {
+  blob: Blob;
+  mime: string;
+  durationMs: number;
+  /** Object URL for playback, revoked here when the note is replaced. */
+  url: string;
+};
+
 export type AduanFormData = {
   category: IssueCategory | null;
   otherCategoryLabel: string;
   description: string;
+  voiceNote: VoiceNote | null;
   latitude: number | null;
   longitude: number | null;
   addressText: string;
@@ -29,6 +38,7 @@ const EMPTY_FORM: AduanFormData = {
   category: null,
   otherCategoryLabel: '',
   description: '',
+  voiceNote: null,
   latitude: null,
   longitude: null,
   addressText: '',
@@ -56,12 +66,22 @@ export function AduanFormProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<AduanFormData>(EMPTY_FORM);
   const [lastTicketNumber, setLastTicketNumber] = useState<string | null>(null);
 
+  // The recording outlives the step that made it, so its object URL is
+  // released here rather than on unmount, when the note is actually dropped.
   function update(patch: Partial<AduanFormData>) {
-    setData((prev) => ({ ...prev, ...patch }));
+    setData((prev) => {
+      if ('voiceNote' in patch && prev.voiceNote && prev.voiceNote !== patch.voiceNote) {
+        URL.revokeObjectURL(prev.voiceNote.url);
+      }
+      return { ...prev, ...patch };
+    });
   }
 
   function reset() {
-    setData(EMPTY_FORM);
+    setData((prev) => {
+      if (prev.voiceNote) URL.revokeObjectURL(prev.voiceNote.url);
+      return EMPTY_FORM;
+    });
   }
 
   return (

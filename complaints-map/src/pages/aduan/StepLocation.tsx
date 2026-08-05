@@ -5,6 +5,8 @@ import 'leaflet/dist/leaflet.css';
 import { useAduanForm } from '../../context/AduanFormContext';
 import { ensureLeafletDefaultIcon } from '../../lib/leafletIcon';
 import { useStepHeadingFocus } from '../../lib/useStepHeadingFocus';
+import AddressAutocomplete from '../../components/AddressAutocomplete';
+import { suggestionToAddress, type PhotonSuggestion } from '../../lib/photon';
 import { t, type Lang } from '../../i18n';
 
 ensureLeafletDefaultIcon();
@@ -21,6 +23,16 @@ function MapInvalidate() {
     const timer = window.setTimeout(() => map.invalidateSize(), 50);
     return () => window.clearTimeout(timer);
   }, [map]);
+  return null;
+}
+
+/** MapContainer only reads `center` on mount, so picking a suggestion after
+ *  the map is already open needs an explicit move. */
+function RecenterOnChange({ lat, lng }: { lat: number; lng: number }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView([lat, lng], map.getZoom());
+  }, [map, lat, lng]);
   return null;
 }
 
@@ -67,9 +79,8 @@ export default function StepLocation({ lang, errorId, hasError }: StepLocationPr
     : KEMPAS_CENTER;
 
   const geoErrorId = 'location-geo-error';
-  const addressFieldId = 'location-address';
 
-  function useMyLocation() {
+  function requestMyLocation() {
     setGeoError(null);
     if (!navigator.geolocation) {
       setGeoError(t(lang, 'locationUnsupported'));
@@ -106,6 +117,16 @@ export default function StepLocation({ lang, errorId, hasError }: StepLocationPr
     update({ latitude: lat, longitude: lng, locationSource: 'pin' });
   }
 
+  function onSuggestionSelect(suggestion: PhotonSuggestion) {
+    setGeoError(null);
+    update({
+      latitude: suggestion.lat,
+      longitude: suggestion.lon,
+      addressText: suggestionToAddress(suggestion),
+      locationSource: 'geocoded',
+    });
+  }
+
   const describedBy = [
     hasError && errorId ? errorId : null,
     geoError ? geoErrorId : null,
@@ -125,7 +146,7 @@ export default function StepLocation({ lang, errorId, hasError }: StepLocationPr
           className="location-option"
           onClick={() => {
             if (geoLoading) return;
-            useMyLocation();
+            requestMyLocation();
           }}
           aria-disabled={geoLoading || undefined}
           aria-describedby={geoError ? geoErrorId : undefined}
@@ -140,20 +161,13 @@ export default function StepLocation({ lang, errorId, hasError }: StepLocationPr
           {geoError ?? ''}
         </p>
 
-        <div className="field">
-          <label className="field__label" htmlFor={addressFieldId}>
-            {t(lang, 'addressLabel')}
-          </label>
-          <input
-            id={addressFieldId}
-            type="text"
-            className="field__input"
-            value={data.addressText}
-            onChange={(e) => update({ addressText: e.target.value })}
-            placeholder={t(lang, 'addressPlaceholder')}
-            aria-describedby={hasError && errorId ? errorId : undefined}
-          />
-        </div>
+        <AddressAutocomplete
+          lang={lang}
+          value={data.addressText}
+          onValueChange={(addressText) => update({ addressText })}
+          onSelect={onSuggestionSelect}
+          describedBy={hasError && errorId ? errorId : undefined}
+        />
 
         {!hasCoords && (
           <button type="button" className="location-option" onClick={pickOnMap}>
@@ -174,6 +188,7 @@ export default function StepLocation({ lang, errorId, hasError }: StepLocationPr
             style={{ height: '100%', width: '100%' }}
           >
             <MapInvalidate />
+            <RecenterOnChange lat={pinPosition[0]} lng={pinPosition[1]} />
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution="&copy; OpenStreetMap"
@@ -184,14 +199,4 @@ export default function StepLocation({ lang, errorId, hasError }: StepLocationPr
       )}
     </div>
   );
-}
-
-export function canProceedFromLocation(data: {
-  latitude: number | null;
-  longitude: number | null;
-  addressText: string;
-}): boolean {
-  const hasCoords = data.latitude != null && data.longitude != null;
-  const hasAddress = data.addressText.trim().length > 0;
-  return hasCoords || hasAddress;
 }

@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type MutableRefObject } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAduanForm } from '../../context/AduanFormContext';
 import { useStepHeadingFocus } from '../../lib/useStepHeadingFocus';
 import { formatCategoryLabel, t, type Lang } from '../../i18n';
 import { parseMalaysianMobile } from '../../lib/phone';
+import { aduanPath } from '../../lib/aduanSteps';
+import { blobToBase64, formatDuration } from '../../lib/voiceNote';
 
 const TURNSTILE_SITE_KEY = '0x4AAAAAAEG4H_wn2RvNm3EG';
 
@@ -33,9 +35,17 @@ type ReviewRow = {
 
 type Props = {
   lang: Lang;
+  submitRef: MutableRefObject<(() => void) | null>;
+  onReadyChange: (ready: boolean) => void;
+  onSubmittingChange: (submitting: boolean) => void;
 };
 
-export default function StepReview({ lang }: Props) {
+export default function StepReview({
+  lang,
+  submitRef,
+  onReadyChange,
+  onSubmittingChange,
+}: Props) {
   const { data, setLastTicketNumber } = useAduanForm();
   const headingRef = useStepHeadingFocus<HTMLHeadingElement>(6);
   const navigate = useNavigate();
@@ -165,6 +175,16 @@ export default function StepReview({ lang }: Props) {
   }
 
   rows.push({
+    label: t(lang, 'reviewVoiceNote'),
+    value: data.voiceNote
+      ? t(lang, 'reviewVoiceNoteAttached', {
+          time: formatDuration(data.voiceNote.durationMs),
+        })
+      : empty,
+    step: 3,
+  });
+
+  rows.push({
     label: t(lang, 'reviewName'),
     value: data.name.trim() || empty,
     step: 5,
@@ -195,6 +215,22 @@ export default function StepReview({ lang }: Props) {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+    // A voice note is supporting evidence, never a reason to lose the report:
+    // if encoding fails the complaint still goes without it.
+    let voiceNotePayload: { mime: string; data: string; duration_ms: number } | null =
+      null;
+    if (data.voiceNote) {
+      try {
+        voiceNotePayload = {
+          mime: data.voiceNote.mime,
+          data: await blobToBase64(data.voiceNote.blob),
+          duration_ms: Math.round(data.voiceNote.durationMs),
+        };
+      } catch {
+        voiceNotePayload = null;
+      }
+    }
+
     try {
       const res = await fetch(`${supabaseUrl}/functions/v1/submit-web-complaint`, {
         method: 'POST',
@@ -206,6 +242,8 @@ export default function StepReview({ lang }: Props) {
         body: JSON.stringify({
           honeypot,
           turnstile_token: turnstileToken,
+          language: lang,
+          voice_note: voiceNotePayload,
           category: data.category,
           description: data.description.trim(),
           latitude: data.latitude,
@@ -246,6 +284,31 @@ export default function StepReview({ lang }: Props) {
 
   const canSubmit = Boolean(turnstileToken) && !submitting;
 
+  // Re-published on every render so the action bar always calls the current
+  // closure rather than one captured with a stale token.
+  useEffect(() => {
+    submitRef.current = canSubmit ? () => void handleSubmit() : null;
+    return () => {
+      submitRef.current = null;
+    };
+  });
+
+  useEffect(() => {
+    onReadyChange(canSubmit);
+  }, [canSubmit, onReadyChange]);
+
+  useEffect(() => {
+    onSubmittingChange(submitting);
+  }, [submitting, onSubmittingChange]);
+
+  useEffect(
+    () => () => {
+      onReadyChange(false);
+      onSubmittingChange(false);
+    },
+    [onReadyChange, onSubmittingChange],
+  );
+
   return (
     <div className="aduan-step__content">
       <h2 ref={headingRef} tabIndex={-1} className="aduan-step__heading">
@@ -259,7 +322,7 @@ export default function StepReview({ lang }: Props) {
               <span className="review-list__label">{row.label}</span>
               <span className="review-list__value">{row.value}</span>
             </div>
-            <Link className="review-list__edit" to={`/aduan/${row.step}`}>
+            <Link className="review-list__edit" to={aduanPath(row.step)}>
               {t(lang, 'reviewEdit')}
             </Link>
           </li>
@@ -289,30 +352,6 @@ export default function StepReview({ lang }: Props) {
         </p>
       )}
 
-      {canSubmit ? (
-        <button
-          type="button"
-          className="btn-primary aduan-submit"
-          onClick={() => void handleSubmit()}
-        >
-          {submitting ? t(lang, 'submitting') : t(lang, 'submitAduan')}
-        </button>
-      ) : (
-        <button
-          type="button"
-          className="btn-primary btn-primary--disabled aduan-submit"
-          aria-disabled="true"
-          aria-describedby={!turnstileToken ? 'turnstile-hint' : undefined}
-          onClick={(e) => e.preventDefault()}
-        >
-          {submitting ? t(lang, 'submitting') : t(lang, 'submitAduan')}
-        </button>
-      )}
-      {!turnstileToken && (
-        <p id="turnstile-hint" className="field__hint">
-          {t(lang, 'turnstileRequired')}
-        </p>
-      )}
     </div>
   );
 }

@@ -111,6 +111,89 @@ body,
   background: var(--color-action-hover);
 }
 
+.app-header__cta--outline {
+  background: transparent;
+  color: var(--color-primary-blue);
+  box-shadow: inset 0 0 0 2px var(--color-primary-blue);
+}
+
+.app-header__cta--outline:hover {
+  background: color-mix(in srgb, var(--color-primary-blue) 10%, transparent);
+}
+
+.beta-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  padding: 8px 16px;
+  background: color-mix(in srgb, var(--color-primary-yellow) 35%, white);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-primary-blue) 12%, transparent);
+}
+
+.beta-banner__text {
+  flex: 1;
+  margin: 0;
+  color: var(--color-primary-text);
+  font: 500 14px/1.4 var(--font-body);
+}
+
+.beta-banner__dismiss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: var(--color-primary-text);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.beta-banner__dismiss:hover {
+  background: color-mix(in srgb, var(--color-primary-blue) 10%, transparent);
+}
+
+/* Deliberately quiet: this is a bug report channel, not a call to action, and
+   it sits a few pixels from the primary button on the form. */
+.feedback-link {
+  display: block;
+  text-align: center;
+}
+
+.feedback-link--inline {
+  align-self: stretch;
+  margin-top: 8px;
+  text-align: right;
+}
+
+.feedback-link__anchor {
+  color: var(--color-text-muted);
+  font: 400 13px/1.4 var(--font-ui);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.feedback-link__anchor:hover {
+  color: var(--color-primary-blue);
+}
+
+.feedback-link__caveat {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-text-subtle);
+  font: 400 11px/1.4 var(--font-ui);
+}
+
+.app-footer__feedback {
+  margin: 0 0 6px;
+}
+
 .app-main {
   position: relative;
   display: flex;
@@ -597,28 +680,55 @@ body,
   background: var(--color-action);
 }
 
+/* The card grows with its content and the page scrolls normally. The two
+   actions sit as a compact column on the right rather than full-width bars. */
+.aduan-step__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+  padding-bottom: max(0px, env(safe-area-inset-bottom));
+}
+
+/* One line is always reserved so revealing a message does not shift the
+   buttons under it. */
 .aduan-step__blocked {
-  margin: 0 0 12px;
+  align-self: stretch;
+  margin: 0;
   min-height: 1.4em;
   color: var(--color-danger);
   font: 500 16px/1.4 var(--font-body);
 }
 
-.aduan-step__blocked:empty {
-  display: none;
-}
-
 .aduan-step__nav {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 10px;
-  padding-bottom: max(0px, env(safe-area-inset-bottom));
+  max-width: 100%;
 }
 
+/* Never shrink: a squeezed button clips its label instead, which the longer
+   Tamil wording hits first. If the pair cannot fit, the row wraps. */
 .aduan-step__nav .btn-primary,
 .aduan-step__nav .btn-secondary {
-  width: 100%;
-  flex: none;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 120px;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+  .aduan-step__nav .btn-primary,
+  .aduan-step__nav .btn-secondary {
+    min-width: 0;
+    padding: 0 14px;
+    font-size: 16px;
+  }
 }
 
 .category-fieldset {
@@ -738,6 +848,130 @@ body,
 
 .field__error:empty {
   display: none;
+}
+
+.voice-note {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.voice-note__record {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 56px;
+  margin-top: 8px;
+  padding: 0 16px;
+  background: var(--color-card);
+  color: var(--color-primary-blue);
+  border: 1px solid color-mix(in srgb, var(--color-primary-blue) 35%, transparent);
+  border-radius: 8px;
+  font: 600 16px/1.2 var(--font-body);
+  cursor: pointer;
+}
+
+.voice-note__record:hover {
+  background: var(--color-muted);
+}
+
+.voice-note__record--active {
+  background: color-mix(in srgb, var(--color-danger) 8%, transparent);
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.voice-note__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-danger);
+  animation: voice-note-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes voice-note-pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voice-note__dot {
+    animation: none;
+  }
+}
+
+.voice-note__playback {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.voice-note__audio {
+  width: 100%;
+}
+
+.voice-note__remove {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0 4px;
+  background: none;
+  border: none;
+  color: var(--color-danger);
+  font: 600 15px/1.2 var(--font-ui);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.address-field__combobox {
+  position: relative;
+}
+
+.address-suggestions {
+  position: absolute;
+  z-index: 1200;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+}
+
+.address-suggestions__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 48px;
+  justify-content: center;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.address-suggestions__item--active {
+  background: var(--color-action-tint);
+}
+
+.address-suggestions__label {
+  color: var(--color-primary-blue);
+  font: 600 16px/1.3 var(--font-body);
+}
+
+.address-suggestions__detail {
+  color: var(--color-text-muted);
+  font: 400 14px/1.3 var(--font-ui);
 }
 
 .location-options {

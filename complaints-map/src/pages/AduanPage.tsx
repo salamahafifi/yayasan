@@ -1,17 +1,26 @@
+import { useRef, useState } from 'react';
 import { Link, Navigate, Outlet, useOutletContext, useParams } from 'react-router-dom';
 import { AduanFormProvider, useAduanForm } from '../context/AduanFormContext';
 import type { AppOutletContext } from '../components/AppLayout';
 import { t } from '../i18n';
 import { isPhoneFieldAcceptable } from '../lib/phone';
+import {
+  ADUAN_STEP_COUNT,
+  aduanPath,
+  stepForLegacyParam,
+  stepForSlug,
+} from '../lib/aduanSteps';
 import StepCategory from './aduan/StepCategory';
-import StepLocation, { canProceedFromLocation } from './aduan/StepLocation';
+import StepLocation from './aduan/StepLocation';
+import FeedbackLink from '../components/FeedbackLink';
+import { canProceedFromLocation } from '../lib/location';
 import StepDetails from './aduan/StepDetails';
 import StepPriorReport from './aduan/StepPriorReport';
 import StepContact from './aduan/StepContact';
 import StepReview from './aduan/StepReview';
 
-const VALID_STEPS = new Set(['1', '2', '3', '4', '5', '6']);
 const VALIDATION_ID = 'aduan-validation';
+const FIRST_STEP_PATH = aduanPath(1);
 
 export default function AduanLayout() {
   const outletContext = useOutletContext<AppOutletContext>();
@@ -26,15 +35,21 @@ export default function AduanLayout() {
 }
 
 export function AduanIndexRedirect() {
-  return <Navigate to="/aduan/1" replace />;
+  return <Navigate to={FIRST_STEP_PATH} replace />;
 }
 
-function DisabledNextButton({
+/**
+ * Stays focusable so a screen reader user can reach it and hear why they are
+ * stuck; activating it reveals the reason rather than doing nothing.
+ */
+function BlockedPrimaryButton({
   label,
   describedBy,
+  onAttempt,
 }: {
   label: string;
   describedBy?: string;
+  onAttempt: () => void;
 }) {
   return (
     <button
@@ -42,9 +57,15 @@ function DisabledNextButton({
       className="btn-primary btn-primary--disabled"
       aria-disabled="true"
       aria-describedby={describedBy}
-      onClick={(e) => e.preventDefault()}
+      onClick={(e) => {
+        e.preventDefault();
+        onAttempt();
+      }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onAttempt();
+        }
       }}
     >
       {label}
@@ -56,14 +77,26 @@ export function AduanStepPage() {
   const { langkah } = useParams<{ langkah: string }>();
   const { lang } = useOutletContext<AppOutletContext>();
   const { data } = useAduanForm();
+  // Holding the step number rather than a boolean clears the attempt on
+  // navigation, so a fresh step never opens already showing an error.
+  const [attemptedStep, setAttemptedStep] = useState<number | null>(null);
+  // Step 6 owns the Turnstile handshake, but its button lives in the shared
+  // action bar, so it reports readiness up and exposes its handler here.
+  const [reviewReady, setReviewReady] = useState(false);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const submitReviewRef = useRef<(() => void) | null>(null);
 
-  if (!langkah || !VALID_STEPS.has(langkah)) {
-    return <Navigate to="/aduan/1" replace />;
+  const slugStep = langkah ? stepForSlug(langkah) : null;
+  const legacyStep = langkah ? stepForLegacyParam(langkah) : null;
+
+  if (!slugStep) {
+    return <Navigate to={legacyStep ? aduanPath(legacyStep) : FIRST_STEP_PATH} replace />;
   }
 
-  const step = Number(langkah);
-  const nextPath = step < 6 ? `/aduan/${step + 1}` : null;
-  const prevPath = step > 1 ? `/aduan/${step - 1}` : null;
+  const step = slugStep;
+  const isLastStep = step === ADUAN_STEP_COUNT;
+  const nextPath = isLastStep ? null : aduanPath(step + 1);
+  const prevPath = step > 1 ? aduanPath(step - 1) : null;
 
   let canNext = true;
   let blockedMessage: string | null = null;
@@ -85,7 +118,17 @@ export function AduanStepPage() {
     canNext = data.consentGiven && phoneOk;
     if (!data.consentGiven) blockedMessage = t(lang, 'step5NeedConsent');
     else if (!phoneOk) blockedMessage = t(lang, 'step5NeedPhoneFix');
+  } else if (isLastStep) {
+    canNext = reviewReady;
+    if (!canNext) blockedMessage = t(lang, 'turnstileRequired');
   }
+
+  const showError = attemptedStep === step && !canNext;
+  const primaryLabel = isLastStep
+    ? reviewSubmitting
+      ? t(lang, 'submitting')
+      : t(lang, 'submitAduan')
+    : t(lang, 'next');
 
   return (
     <div className="page-panel aduan-step">
@@ -94,14 +137,14 @@ export function AduanStepPage() {
         role="progressbar"
         aria-valuenow={step}
         aria-valuemin={1}
-        aria-valuemax={6}
+        aria-valuemax={ADUAN_STEP_COUNT}
         aria-label={t(lang, 'progressLabel')}
       >
         <p className="aduan-step__progress-text">
           {t(lang, 'progressText', { step })}
         </p>
         <div className="aduan-step__progress" aria-hidden="true">
-          {[1, 2, 3, 4, 5, 6].map((n) => (
+          {Array.from({ length: ADUAN_STEP_COUNT }, (_, i) => i + 1).map((n) => (
             <span
               key={n}
               className={
@@ -117,51 +160,71 @@ export function AduanStepPage() {
       </div>
 
       {step === 1 && (
-        <StepCategory lang={lang} errorId={VALIDATION_ID} hasError={!canNext} />
+        <StepCategory lang={lang} errorId={VALIDATION_ID} hasError={showError} />
       )}
       {step === 2 && (
-        <StepLocation lang={lang} errorId={VALIDATION_ID} hasError={!canNext} />
+        <StepLocation lang={lang} errorId={VALIDATION_ID} hasError={showError} />
       )}
       {step === 3 && (
-        <StepDetails lang={lang} errorId={VALIDATION_ID} hasError={!canNext} />
+        <StepDetails lang={lang} errorId={VALIDATION_ID} hasError={showError} />
       )}
       {step === 4 && (
-        <StepPriorReport lang={lang} errorId={VALIDATION_ID} hasError={!canNext} />
+        <StepPriorReport lang={lang} errorId={VALIDATION_ID} hasError={showError} />
       )}
       {step === 5 && (
-        <StepContact lang={lang} errorId={VALIDATION_ID} hasError={!canNext} />
+        <StepContact lang={lang} errorId={VALIDATION_ID} hasError={showError} />
       )}
-      {step === 6 && <StepReview lang={lang} />}
+      {isLastStep && (
+        <StepReview
+          lang={lang}
+          submitRef={submitReviewRef}
+          onReadyChange={setReviewReady}
+          onSubmittingChange={setReviewSubmitting}
+        />
+      )}
 
-      {step < 6 && (
+      <div className="aduan-step__actions">
         <p id={VALIDATION_ID} className="aduan-step__blocked" aria-live="polite">
-          {blockedMessage ?? ''}
+          {showError ? blockedMessage : ''}
         </p>
-      )}
 
-      <nav className="aduan-step__nav" aria-label={t(lang, 'stepNav')}>
-        {step < 6 &&
-          (canNext && nextPath ? (
-            <Link className="btn-primary" to={nextPath}>
-              {t(lang, 'next')}
+        {/* Back sits first so reading and tab order follow the row itself. */}
+        <nav className="aduan-step__nav" aria-label={t(lang, 'stepNav')}>
+          {step === 1 ? (
+            <Link className="btn-secondary" to="/">
+              {t(lang, 'cancel')}
             </Link>
           ) : (
-            <DisabledNextButton
-              label={t(lang, 'next')}
-              describedBy={VALIDATION_ID}
-            />
-          ))}
+            <Link className="btn-secondary" to={prevPath!}>
+              {t(lang, 'back')}
+            </Link>
+          )}
 
-        {step === 1 ? (
-          <Link className="btn-secondary" to="/">
-            {t(lang, 'cancel')}
-          </Link>
-        ) : (
-          <Link className="btn-secondary" to={prevPath!}>
-            {t(lang, 'back')}
-          </Link>
-        )}
-      </nav>
+          {canNext ? (
+            isLastStep ? (
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => submitReviewRef.current?.()}
+              >
+                {primaryLabel}
+              </button>
+            ) : (
+              <Link className="btn-primary" to={nextPath!}>
+                {primaryLabel}
+              </Link>
+            )
+          ) : (
+            <BlockedPrimaryButton
+              label={primaryLabel}
+              describedBy={VALIDATION_ID}
+              onAttempt={() => setAttemptedStep(step)}
+            />
+          )}
+        </nav>
+
+        <FeedbackLink lang={lang} variant="inline" />
+      </div>
     </div>
   );
 }

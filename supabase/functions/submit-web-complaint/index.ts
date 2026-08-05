@@ -29,6 +29,77 @@ const CONSENT_VERSION = "2026-07-29";
 const RATE_LIMIT_PER_HOUR = 5;
 const GEOCODE_TIMEOUT_MS = 5000;
 
+const VALID_LANGUAGES = new Set(["ms", "en", "zh", "ta"]);
+
+const VOICE_NOTE_BUCKET = "ticket-voice-notes";
+const MAX_VOICE_NOTE_BYTES = 2 * 1024 * 1024;
+const VOICE_NOTE_EXTENSIONS: Record<string, string> = {
+  "audio/webm": "webm",
+  "audio/ogg": "ogg",
+  "audio/mp4": "m4a",
+  "audio/mpeg": "mp3",
+  "audio/wav": "wav",
+};
+
+/**
+ * Uploads the recording to the private staff-only bucket and returns its
+ * storage path. Returns null on any problem: a voice note is supporting
+ * evidence, and losing the whole complaint over it would be far worse.
+ */
+async function storeVoiceNote(
+  note: { mime?: string; data?: string } | null | undefined,
+): Promise<string | null> {
+  if (!note || typeof note.data !== "string" || !note.data) return null;
+
+  const baseMime = typeof note.mime === "string" ? note.mime.split(";")[0].trim() : "";
+  const extension = VOICE_NOTE_EXTENSIONS[baseMime];
+  if (!extension) {
+    console.error("Rejected voice note with unsupported mime:", baseMime);
+    return null;
+  }
+
+  let bytes: Uint8Array;
+  try {
+    const binary = atob(note.data);
+    bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  } catch (err) {
+    console.error("Voice note base64 decode failed:", String(err));
+    return null;
+  }
+
+  if (bytes.length === 0 || bytes.length > MAX_VOICE_NOTE_BYTES) {
+    console.error("Rejected voice note of size:", bytes.length);
+    return null;
+  }
+
+  const path = `web/${crypto.randomUUID()}.${extension}`;
+  const { error } = await supabase.storage
+    .from(VOICE_NOTE_BUCKET)
+    .upload(path, new Blob([bytes], { type: baseMime }), {
+      contentType: baseMime,
+      upsert: false,
+    });
+
+  if (error) {
+    console.error("Voice note upload failed:", JSON.stringify(error));
+    return null;
+  }
+
+  return path;
+}
+
+/**
+ * Malaysia runs UTC+8 year round, so "today" is evaluated in local time.
+ * Judging against UTC would reject a same-day report filed before 8am.
+ */
+function isFutureDate(isoDate: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return false;
+  const nowMyt = new Date(Date.now() + 8 * 60 * 60 * 1000);
+  const todayMyt = nowMyt.toISOString().slice(0, 10);
+  return isoDate > todayMyt;
+}
+
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -47,6 +118,8 @@ type WebPayload = {
   agency?: string | null;
   agency_ref?: string | null;
   agency_reported_at?: string | null;
+  language?: string | null;
+  voice_note?: { mime?: string; data?: string; duration_ms?: number } | null;
 };
 
 type ResolvedLocation = {
@@ -375,6 +448,16 @@ Deno.serve(async (req) => {
     typeof body.agency_reported_at === "string" && body.agency_reported_at.trim()
       ? body.agency_reported_at.trim()
       : null;
+  if (agencyReportedAt && isFutureDate(agencyReportedAt)) {
+    return jsonResponse({ error: "Agency report date cannot be in the future" }, 400, origin);
+  }
+
+  const language =
+    typeof body.language === "string" && VALID_LANGUAGES.has(body.language)
+      ? body.language
+      : "ms";
+
+  const voiceNotePath = await storeVoiceNote(body.voice_note);
 
   const { data: ticket, error: rpcError } = await supabase.rpc("create_or_link_ticket", {
     p_category: category,
@@ -391,6 +474,8 @@ Deno.serve(async (req) => {
     p_agency: agency,
     p_agency_ref: agencyRef,
     p_agency_reported_at: agencyReportedAt,
+    p_language: language,
+    p_voice_note_url: voiceNotePath,
   });
 
   if (rpcError || !ticket) {

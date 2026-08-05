@@ -4,6 +4,14 @@ import { t, type Lang } from '../../i18n';
 
 const QUICK_AGENCIES = ['MBJB', 'IWK', 'SAJ', 'TNB'] as const;
 
+/** Local calendar date, not UTC: a resident in Johor reporting late at night
+ *  would otherwise see tomorrow rejected as "future". */
+function todayLocalISO(): string {
+  const now = new Date();
+  const offsetMs = now.getTimezoneOffset() * 60_000;
+  return new Date(now.getTime() - offsetMs).toISOString().slice(0, 10);
+}
+
 type Props = {
   lang: Lang;
   errorId?: string;
@@ -41,19 +49,19 @@ export default function StepPriorReport({ lang, errorId, hasError }: Props) {
       >
         <button
           type="button"
-          className={`location-option${data.hasReportedBefore === false ? ' location-option--selected' : ''}`}
-          aria-pressed={data.hasReportedBefore === false}
-          onClick={chooseNo}
-        >
-          {t(lang, 'step4No')}
-        </button>
-        <button
-          type="button"
           className={`location-option${data.hasReportedBefore === true ? ' location-option--selected' : ''}`}
           aria-pressed={data.hasReportedBefore === true}
           onClick={chooseYes}
         >
           {t(lang, 'step4Yes')}
+        </button>
+        <button
+          type="button"
+          className={`location-option${data.hasReportedBefore === false ? ' location-option--selected' : ''}`}
+          aria-pressed={data.hasReportedBefore === false}
+          onClick={chooseNo}
+        >
+          {t(lang, 'step4No')}
         </button>
       </div>
 
@@ -107,6 +115,7 @@ export default function StepPriorReport({ lang, errorId, hasError }: Props) {
               id="agency-date"
               type="date"
               className="field__input"
+              max={todayLocalISO()}
               value={data.agency_reported_at}
               onChange={(e) => update({ agency_reported_at: e.target.value })}
             />

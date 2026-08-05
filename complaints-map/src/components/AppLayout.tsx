@@ -1,19 +1,50 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { t, type Lang } from '../i18n';
+import { aduanPath } from '../lib/aduanSteps';
+import BetaBanner from './BetaBanner';
+import FeedbackLink from './FeedbackLink';
 
 export type AppOutletContext = {
   lang: Lang;
   setLang: (lang: Lang) => void;
 };
 
+const LANG_STORAGE_KEY = 'aduan.lang';
+
+const LANG_OPTIONS: { code: Lang; label: string }[] = [
+  { code: 'ms', label: 'BM' },
+  { code: 'en', label: 'EN' },
+  { code: 'zh', label: '中文' },
+  { code: 'ta', label: 'தமிழ்' },
+];
+
+function isLang(value: string | null): value is Lang {
+  return value === 'ms' || value === 'en' || value === 'zh' || value === 'ta';
+}
+
+function readStoredLang(): Lang {
+  try {
+    const stored = window.localStorage.getItem(LANG_STORAGE_KEY);
+    if (isLang(stored)) return stored;
+  } catch {
+    // Private browsing can throw on access; the default is fine.
+  }
+  return 'ms';
+}
+
 export default function AppLayout() {
-  const [lang, setLang] = useState<Lang>('ms');
+  const [lang, setLang] = useState<Lang>(readStoredLang);
   const { pathname } = useLocation();
-  const showBuatAduan = pathname === '/' || pathname.startsWith('/semak');
+  const showNavActions = !pathname.startsWith('/aduan');
 
   useEffect(() => {
-    document.documentElement.lang = lang === 'ms' ? 'ms' : lang;
+    document.documentElement.lang = lang;
+    try {
+      window.localStorage.setItem(LANG_STORAGE_KEY, lang);
+    } catch {
+      // Selection still applies for this session.
+    }
   }, [lang]);
 
   return (
@@ -26,31 +57,37 @@ export default function AppLayout() {
           </Link>
         </div>
         <div className="app-header__actions">
-          {showBuatAduan && (
-            <Link to="/aduan/1" className="app-header__cta">
-              {t(lang, 'buatAduan')}
-            </Link>
+          {showNavActions && (
+            <>
+              <Link to={aduanPath(1)} className="app-header__cta">
+                {t(lang, 'buatAduan')}
+              </Link>
+              <Link
+                to="/semak"
+                className="app-header__cta app-header__cta--outline"
+              >
+                {t(lang, 'semakStatus')}
+              </Link>
+            </>
           )}
           <div className="lang-toggle" role="group" aria-label={t(lang, 'language')}>
-            <button
-              type="button"
-              className={`lang-toggle__btn${lang === 'en' ? ' lang-toggle__btn--active' : ''}`}
-              onClick={() => setLang('en')}
-              aria-pressed={lang === 'en'}
-            >
-              EN
-            </button>
-            <button
-              type="button"
-              className={`lang-toggle__btn${lang === 'ms' ? ' lang-toggle__btn--active' : ''}`}
-              onClick={() => setLang('ms')}
-              aria-pressed={lang === 'ms'}
-            >
-              BM
-            </button>
+            {LANG_OPTIONS.map((option) => (
+              <button
+                key={option.code}
+                type="button"
+                lang={option.code}
+                className={`lang-toggle__btn${lang === option.code ? ' lang-toggle__btn--active' : ''}`}
+                onClick={() => setLang(option.code)}
+                aria-pressed={lang === option.code}
+              >
+                {option.label}
+              </button>
+            ))}
           </div>
         </div>
       </header>
+
+      <BetaBanner lang={lang} />
 
       <Outlet context={{ lang, setLang } satisfies AppOutletContext} />
 
@@ -62,6 +99,9 @@ export default function AppLayout() {
           <a href="/data-deletion">{t(lang, 'dataDeletion')}</a>
           <Link to="/semak">{t(lang, 'trackReport')}</Link>
         </nav>
+        <p className="app-footer__feedback">
+          <FeedbackLink lang={lang} variant="block" />
+        </p>
         <p className="app-footer__meta">{t(lang, 'footerMeta')}</p>
       </footer>
     </div>

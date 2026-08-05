@@ -1,5 +1,6 @@
 import { useAduanForm } from '../../context/AduanFormContext';
 import { useStepHeadingFocus } from '../../lib/useStepHeadingFocus';
+import VoiceNoteRecorder from '../../components/VoiceNoteRecorder';
 import { t, type Lang } from '../../i18n';
 
 type Props = {
@@ -38,6 +39,12 @@ export default function StepDetails({ lang, errorId, hasError }: Props) {
           {t(lang, 'charCounter', { count: data.description.length })}
         </span>
       </div>
+
+      <VoiceNoteRecorder
+        lang={lang}
+        value={data.voiceNote}
+        onChange={(voiceNote) => update({ voiceNote })}
+      />
     </div>
   );
 }
