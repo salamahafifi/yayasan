@@ -32,7 +32,10 @@ function Dashboard({
   return (
     <div className="dashboard">
       <header className="dashboard__header">
-        <h1 className="dashboard__title">Panel Staf</h1>
+        <h1 className="dashboard__title">
+          Panel Staf · Peta Aduan{' '}
+          <span className="dashboard__title-accent">Salamahafifi</span>
+        </h1>
         <div className="dashboard__user">
           <span>
             {profile.name} · {profile.role}

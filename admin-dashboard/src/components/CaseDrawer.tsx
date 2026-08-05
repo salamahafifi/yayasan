@@ -46,6 +46,7 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
   const [pendingPin, setPendingPin] = useState<[number, number] | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [photoBusyId, setPhotoBusyId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const loadPhotoUrls = useCallback(async (rows: TicketPhoto[]) => {
@@ -163,8 +164,10 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
   }
 
   async function togglePhoto(photo: TicketPhoto, publish: boolean) {
-    if (!canEdit || !ticket) return;
-    setSaving(true);
+    if (!canEdit || !ticket || photoBusyId != null) return;
+    if (publish === photo.is_public) return;
+
+    setPhotoBusyId(photo.id);
     setError(null);
 
     if (publish) {
@@ -175,14 +178,14 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
         .createSignedUrl(photo.storage_path, 60);
       if (signError) {
         setError(signError.message);
-        setSaving(false);
+        setPhotoBusyId(null);
         return;
       }
 
       const response = await fetch(signed.signedUrl);
       if (!response.ok) {
         setError('Unable to read the private photo.');
-        setSaving(false);
+        setPhotoBusyId(null);
         return;
       }
 
@@ -192,7 +195,7 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
         .upload(publicPath, blob, { contentType: blob.type || 'image/jpeg', upsert: true });
       if (uploadError) {
         setError(uploadError.message);
-        setSaving(false);
+        setPhotoBusyId(null);
         return;
       }
 
@@ -203,7 +206,7 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
       if (rowError) {
         await supabase.storage.from('ticket-photos-public').remove([publicPath]);
         setError(rowError.message);
-        setSaving(false);
+        setPhotoBusyId(null);
         return;
       }
     } else if (photo.public_path) {
@@ -212,7 +215,7 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
         .remove([photo.public_path]);
       if (removeError) {
         setError(removeError.message);
-        setSaving(false);
+        setPhotoBusyId(null);
         return;
       }
       const { error: rowError } = await supabase
@@ -221,13 +224,23 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
         .eq('id', photo.id);
       if (rowError) {
         setError(rowError.message);
-        setSaving(false);
+        setPhotoBusyId(null);
+        return;
+      }
+    } else {
+      const { error: rowError } = await supabase
+        .from('ticket_photos')
+        .update({ public_path: null, is_public: false })
+        .eq('id', photo.id);
+      if (rowError) {
+        setError(rowError.message);
+        setPhotoBusyId(null);
         return;
       }
     }
 
     await load();
-    setSaving(false);
+    setPhotoBusyId(null);
     onChanged();
   }
 
@@ -273,26 +286,11 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
         {error && <p className="status-text status-text--error">{error}</p>}
         {ticket && (
           <>
-            <section className="case-section">
-              <h3>Full case</h3>
-              <dl className="case-fields">
-                {canEdit && 'name' in ticket && <><dt>Name</dt><dd>{ticket.name ?? '—'}</dd></>}
-                {canEdit && 'contact_number' in ticket && <><dt>Phone</dt><dd>{ticket.contact_number ?? '—'}</dd></>}
-                {canEdit && 'description' in ticket && <><dt>Description</dt><dd>{ticket.description}</dd></>}
-                <dt>Category</dt><dd>{CATEGORY_LABELS[ticket.category]}</dd>
-                <dt>Agency</dt><dd>{ticket.agency ?? '—'}</dd>
-                <dt>Agency ref</dt><dd>{ticket.agency_ref ?? '—'}</dd>
-                <dt>Agency date</dt><dd>{ticket.agency_reported_at ? formatDate(ticket.agency_reported_at) : '—'}</dd>
-                <dt>Address</dt><dd>{ticket.address_text ?? '—'}</dd>
-                <dt>Coordinates</dt>
-                <dd>{ticket.latitude == null ? 'Needs location' : `${ticket.latitude.toFixed(6)}, ${ticket.longitude?.toFixed(6)}`}</dd>
-                <dt>Location source</dt><dd>{ticket.location_source ?? '—'}</dd>
-                <dt>Days outstanding</dt><dd>{days ?? '—'}</dd>
-              </dl>
-            </section>
-
             <section className="case-section case-controls">
-              <h3>Case management</h3>
+              <h3>Status &amp; assignment</h3>
+              <p className="case-controls__hint">
+                Update status when the case moves (baru → siasat → majlis → selesai), or mark tangguh if paused.
+              </p>
               <label>
                 Status
                 <select
@@ -322,6 +320,77 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
 
             {canEdit && (
               <section className="case-section">
+                <h3>Resident photos</h3>
+                <p className="case-help">
+                  Choose which photos appear on the public map. Unpublished photos stay staff-only.
+                </p>
+                <div className="case-photos">
+                  {photos.map((photo) => {
+                    const busy = photoBusyId === photo.id;
+                    return (
+                      <figure
+                        key={photo.id}
+                        className={`case-photo${photo.is_public ? ' case-photo--published' : ''}`}
+                      >
+                        {photo.signed_url
+                          ? <img src={photo.signed_url} alt={`Ticket photo ${photo.id}`} />
+                          : <div className="case-photo-error">Preview unavailable</div>}
+                        <div className="case-photo__meta">
+                          <span
+                            className={`case-photo__badge case-photo__badge--${photo.is_public ? 'public' : 'private'}`}
+                          >
+                            {photo.is_public ? 'On public map' : 'Staff only'}
+                          </span>
+                          <div className="case-photo__actions">
+                            {photo.is_public ? (
+                              <button
+                                type="button"
+                                className="btn btn--secondary"
+                                disabled={photoBusyId != null}
+                                onClick={() => void togglePhoto(photo, false)}
+                              >
+                                {busy ? 'Updating…' : 'Unpublish'}
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                className="btn btn--primary"
+                                disabled={photoBusyId != null}
+                                onClick={() => void togglePhoto(photo, true)}
+                              >
+                                {busy ? 'Publishing…' : 'Publish on map'}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </figure>
+                    );
+                  })}
+                  {photos.length === 0 && <p className="status-text">No photos attached.</p>}
+                </div>
+              </section>
+            )}
+
+            <section className="case-section">
+              <h3>Full case</h3>
+              <dl className="case-fields">
+                {canEdit && 'name' in ticket && <><dt>Name</dt><dd>{ticket.name ?? '—'}</dd></>}
+                {canEdit && 'contact_number' in ticket && <><dt>Phone</dt><dd>{ticket.contact_number ?? '—'}</dd></>}
+                {canEdit && 'description' in ticket && <><dt>Description</dt><dd>{ticket.description}</dd></>}
+                <dt>Category</dt><dd>{CATEGORY_LABELS[ticket.category]}</dd>
+                <dt>Agency</dt><dd>{ticket.agency ?? '—'}</dd>
+                <dt>Agency ref</dt><dd>{ticket.agency_ref ?? '—'}</dd>
+                <dt>Agency date</dt><dd>{ticket.agency_reported_at ? formatDate(ticket.agency_reported_at) : '—'}</dd>
+                <dt>Address</dt><dd>{ticket.address_text ?? '—'}</dd>
+                <dt>Coordinates</dt>
+                <dd>{ticket.latitude == null ? 'Needs location' : `${ticket.latitude.toFixed(6)}, ${ticket.longitude?.toFixed(6)}`}</dd>
+                <dt>Location source</dt><dd>{ticket.location_source ?? '—'}</dd>
+                <dt>Days outstanding</dt><dd>{days ?? '—'}</dd>
+              </dl>
+            </section>
+
+            {canEdit && (
+              <section className="case-section">
                 <h3>Place or confirm location</h3>
                 {ticket.location_source === 'geocoded' && (
                   <p className="location-flag location-flag--verify">Geocoded location requires staff confirmation.</p>
@@ -338,12 +407,17 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
                       <CircleMarker
                         center={pendingPin}
                         radius={8}
-                        pathOptions={{ color: '#fff', fillColor: '#1B4332', fillOpacity: 1, weight: 2 }}
+                        pathOptions={{ color: '#fff', fillColor: '#202070', fillOpacity: 1, weight: 2 }}
                       />
                     )}
                   </MapContainer>
                 </div>
-                <button type="button" disabled={!pendingPin || saving} onClick={() => void savePin()}>
+                <button
+                  type="button"
+                  className="btn btn--primary"
+                  disabled={!pendingPin || saving}
+                  onClick={() => void savePin()}
+                >
                   Save staff location
                 </button>
               </section>
@@ -359,7 +433,9 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
                     placeholder="Add an append-only remark"
                     rows={3}
                   />
-                  <button disabled={saving || !noteBody.trim()}>Add remark</button>
+                  <button className="btn btn--primary" disabled={saving || !noteBody.trim()}>
+                    Add remark
+                  </button>
                 </form>
                 <div className="case-thread">
                   {notes.map((note) => (
@@ -369,31 +445,6 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
                     </article>
                   ))}
                   {notes.length === 0 && <p className="status-text">No remarks yet.</p>}
-                </div>
-              </section>
-            )}
-
-            {canEdit && (
-              <section className="case-section">
-                <h3>Photos</h3>
-                <div className="case-photos">
-                  {photos.map((photo) => (
-                    <figure key={photo.id}>
-                      {photo.signed_url
-                        ? <img src={photo.signed_url} alt={`Ticket photo ${photo.id}`} />
-                        : <div className="case-photo-error">Preview unavailable</div>}
-                      <label>
-                        <input
-                          type="checkbox"
-                          checked={photo.is_public}
-                          disabled={saving}
-                          onChange={(event) => void togglePhoto(photo, event.target.checked)}
-                        />
-                        Published
-                      </label>
-                    </figure>
-                  ))}
-                  {photos.length === 0 && <p className="status-text">No photos.</p>}
                 </div>
               </section>
             )}

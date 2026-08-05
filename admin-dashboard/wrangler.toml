@@ -1,0 +1,9 @@
+# Cloudflare Pages — connect this directory as a Pages project, or deploy with:
+#   npm run build && npx wrangler pages deploy dist --project-name=aduan-staf
+#
+# Suggested production URL: https://staf.aduan.sahkan.my
+# Remember to add that origin to Supabase Auth redirect URLs before go-live.
+
+name = "aduan-staf"
+compatibility_date = "2026-08-05"
+pages_build_output_dir = "dist"

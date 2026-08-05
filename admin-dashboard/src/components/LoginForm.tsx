@@ -65,7 +65,14 @@ function LoginForm() {
   return (
     <div className="login">
       <div className="login__form">
-        <h1 className="login__title">Log Masuk Staf</h1>
+        <p className="login__eyebrow">Staff only</p>
+        <p className="login__brand">
+          Peta Aduan <span className="login__brand-accent">Salamahafifi</span>
+        </p>
+        <h1 className="login__title">Panel Staf</h1>
+        <p className="login__lede">
+          Log masuk untuk mengurus aduan, status kes, dan gambar untuk peta awam.
+        </p>
 
         <button
           type="button"
@@ -113,6 +120,9 @@ function LoginForm() {
 
         {info && <p className="login__info">{info}</p>}
         {error && <p className="login__error">{error}</p>}
+        <p className="login__staff-note">
+          Akaun baharu perlu diluluskan oleh pentadbir sebelum boleh digunakan.
+        </p>
       </div>
     </div>
   );

@@ -3,8 +3,8 @@ import { GeoJSON, useMap } from 'react-leaflet';
 import type { GeoJSON as LeafletGeoJSON, PathOptions } from 'leaflet';
 import { dunBoundary } from '../data/dun-boundary';
 
-/** Matches sahkan.my --color-brand-primary */
-export const BOUNDARY_COLOR = '#1B4332';
+/** Matches public site --color-primary-blue */
+export const BOUNDARY_COLOR = '#202070';
 
 function boundaryWeight(zoom: number): number {
   return Math.min(10, Math.max(5, zoom - 7));
