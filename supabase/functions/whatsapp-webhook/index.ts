@@ -263,26 +263,42 @@ const STRINGS: Record<Lang, Record<string, string>> = {
 };
 
 const CATEGORY_LABELS: Record<string, Record<Lang, string>> = {
-  longkang_tersumbat: {
-    ms: "Longkang tersumbat",
-    en: "Clogged drain",
-    zh: "排水沟堵塞",
-    ta: "அடைந்த வடிகால்",
+  jalan_berlubang: {
+    ms: "Jalan & perabot jalan",
+    en: "Roads & street furniture",
+    zh: "道路与街道设施",
+    ta: "சாலை & தெரு உபகரணங்கள்",
   },
-  jalan_berlubang: { ms: "Jalan berlubang", en: "Pothole", zh: "坑洞", ta: "சாலைக் குழி" },
   lampu_jalan: {
-    ms: "Lampu jalan rosak",
-    en: "Broken streetlight",
-    zh: "路灯故障",
-    ta: "தெரு விளக்கு பழுது",
+    ms: "Lampu jalan & lampu isyarat",
+    en: "Street lights & traffic lights",
+    zh: "路灯与交通灯",
+    ta: "தெரு விளக்கு & போக்குவரத்து விளக்கு",
+  },
+  semak: {
+    ms: "Pokok & landskap",
+    en: "Trees & landscape",
+    zh: "树木与景观",
+    ta: "மரங்கள் & நிலப்பரப்பு",
   },
   sampah: {
-    ms: "Sampah tidak dikutip",
-    en: "Uncollected rubbish",
-    zh: "垃圾未清运",
-    ta: "குப்பை எடுக்கப்படவில்லை",
+    ms: "Sampah & pembersihan",
+    en: "Waste & cleaning",
+    zh: "垃圾与清洁",
+    ta: "குப்பை & சுத்தம்",
   },
-  semak: { ms: "Semak panjang", en: "Overgrown bushes", zh: "杂草过长", ta: "நீண்ட புதர்" },
+  longkang_tersumbat: {
+    ms: "Saliran & perparitan",
+    en: "Drainage & waterways",
+    zh: "排水与沟渠",
+    ta: "வடிகால் & நீர்வழி",
+  },
+  gangguan_haiwan: {
+    ms: "Gangguan haiwan",
+    en: "Animal nuisance",
+    zh: "动物滋扰",
+    ta: "விலங்கு தொல்லை",
+  },
   lain_lain: { ms: "Lain-lain", en: "Other", zh: "其他", ta: "மற்றவை" },
 };
 
@@ -294,11 +310,12 @@ const supabase = createClient(
 const LANGUAGE_MAP: Record<string, string> = { "1": "ms", "2": "en", "3": "zh", "4": "ta" };
 
 const CATEGORIES = [
-  "longkang_tersumbat",
   "jalan_berlubang",
   "lampu_jalan",
-  "sampah",
   "semak",
+  "sampah",
+  "longkang_tersumbat",
+  "gangguan_haiwan",
   "lain_lain",
 ];
 

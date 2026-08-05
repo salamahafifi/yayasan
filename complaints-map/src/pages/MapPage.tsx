@@ -30,11 +30,12 @@ const MAP_MAX_BOUNDS: [[number, number], [number, number]] = [
 ];
 
 const LEGEND_CATEGORIES: IssueCategory[] = [
-  'longkang_tersumbat',
   'jalan_berlubang',
   'lampu_jalan',
-  'sampah',
   'semak',
+  'sampah',
+  'longkang_tersumbat',
+  'gangguan_haiwan',
   'lain_lain',
 ];
 

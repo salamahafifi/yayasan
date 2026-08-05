@@ -106,11 +106,12 @@
   --color-marker-stroke: var(--color-card);
 
   /* Map category colours — must never include accent-pink */
-  --color-category-longkang_tersumbat: #0e7490;
   --color-category-jalan_berlubang: #b45309;
   --color-category-lampu_jalan: #ca8a04;
-  --color-category-sampah: #6d28d9;
   --color-category-semak: #166534;
+  --color-category-sampah: #6d28d9;
+  --color-category-longkang_tersumbat: #0e7490;
+  --color-category-gangguan_haiwan: #1e40af;
   --color-category-lain_lain: #57534e;
 
   /* Fonts — names match bersama.org theme; faces self-hosted or Google Fonts */

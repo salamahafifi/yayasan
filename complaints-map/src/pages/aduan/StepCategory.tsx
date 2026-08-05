@@ -5,11 +5,12 @@ import { useStepHeadingFocus } from '../../lib/useStepHeadingFocus';
 import { t, type Lang } from '../../i18n';
 
 const CATEGORIES: IssueCategory[] = [
-  'longkang_tersumbat',
   'jalan_berlubang',
   'lampu_jalan',
-  'sampah',
   'semak',
+  'sampah',
+  'longkang_tersumbat',
+  'gangguan_haiwan',
   'lain_lain',
 ];
 

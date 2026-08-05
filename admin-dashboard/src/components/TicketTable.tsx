@@ -14,11 +14,12 @@ import {
 
 const STATUS_OPTIONS: TicketStatus[] = ['baru', 'siasat', 'majlis_perbandaran', 'selesai', 'tangguh'];
 const CATEGORY_OPTIONS: IssueCategory[] = [
-  'longkang_tersumbat',
   'jalan_berlubang',
   'lampu_jalan',
-  'sampah',
   'semak',
+  'sampah',
+  'longkang_tersumbat',
+  'gangguan_haiwan',
   'lain_lain',
 ];
 

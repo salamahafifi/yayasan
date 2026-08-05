@@ -5,11 +5,12 @@ const ALLOWED_ORIGINS = new Set([
 ]);
 
 const VALID_CATEGORIES = new Set([
-  "longkang_tersumbat",
   "jalan_berlubang",
   "lampu_jalan",
-  "sampah",
   "semak",
+  "sampah",
+  "longkang_tersumbat",
+  "gangguan_haiwan",
   "lain_lain",
 ]);
 
