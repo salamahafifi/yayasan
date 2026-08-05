@@ -108,8 +108,20 @@ export function AduanStepPage() {
     canNext = canProceedFromLocation(data);
     if (!canNext) blockedMessage = t(lang, 'step2NeedLocation');
   } else if (step === 3) {
-    canNext = data.description.trim().length > 0;
-    if (!canNext) blockedMessage = t(lang, 'step3NeedDescription');
+    const hasDescription = data.description.trim().length > 0;
+    const hasVoice = data.voiceNote != null;
+    const detailsOk =
+      hasDescription || (data.preferVoiceNote && hasVoice);
+    const photosOk = data.photos.length > 0 || data.noPhotos;
+    canNext = detailsOk && photosOk;
+    if (!detailsOk) {
+      blockedMessage =
+        data.preferVoiceNote && !hasVoice
+          ? t(lang, 'step3NeedVoice')
+          : t(lang, 'step3NeedDescription');
+    } else if (!photosOk) {
+      blockedMessage = t(lang, 'step3NeedPhotosChoice');
+    }
   } else if (step === 4) {
     canNext = data.hasReportedBefore !== null;
     if (!canNext) blockedMessage = t(lang, 'step4NeedChoice');

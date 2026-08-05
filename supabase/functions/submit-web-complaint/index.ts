@@ -41,6 +41,16 @@ const VOICE_NOTE_EXTENSIONS: Record<string, string> = {
   "audio/wav": "wav",
 };
 
+const PHOTO_BUCKET = "ticket-photos";
+const MAX_PHOTOS = 3;
+const MAX_PHOTO_BYTES = 1.5 * 1024 * 1024;
+const PHOTO_EXTENSIONS: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/jpg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
+
 /**
  * Uploads the recording to the private staff-only bucket and returns its
  * storage path. Returns null on any problem: a voice note is supporting
@@ -89,6 +99,71 @@ async function storeVoiceNote(
   return path;
 }
 
+type WebPhoto = { mime?: string; data?: string };
+
+/**
+ * Uploads web form photos to the private staff bucket and inserts ticket_photos
+ * rows. Failures are logged and skipped: a missing photo must never sink the
+ * complaint that already saved.
+ */
+async function storePhotos(ticketId: number, photos: WebPhoto[] | null | undefined) {
+  if (!Array.isArray(photos) || photos.length === 0) return;
+
+  let sortOrder = 0;
+  for (const photo of photos.slice(0, MAX_PHOTOS)) {
+    if (!photo || typeof photo.data !== "string" || !photo.data) continue;
+
+    const baseMime = typeof photo.mime === "string" ? photo.mime.split(";")[0].trim() : "";
+    const extension = PHOTO_EXTENSIONS[baseMime];
+    if (!extension) {
+      console.error("Rejected photo with unsupported mime:", baseMime);
+      continue;
+    }
+
+    let bytes: Uint8Array;
+    try {
+      const binary = atob(photo.data);
+      bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+    } catch (err) {
+      console.error("Photo base64 decode failed:", String(err));
+      continue;
+    }
+
+    if (bytes.length === 0 || bytes.length > MAX_PHOTO_BYTES) {
+      console.error("Rejected photo of size:", bytes.length);
+      continue;
+    }
+
+    const path = `web/${ticketId}/${crypto.randomUUID()}.${extension}`;
+    const { error: uploadError } = await supabase.storage
+      .from(PHOTO_BUCKET)
+      .upload(path, new Blob([bytes], { type: baseMime }), {
+        contentType: baseMime,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error("Photo upload failed:", JSON.stringify(uploadError));
+      continue;
+    }
+
+    const { error: insertError } = await supabase.from("ticket_photos").insert({
+      ticket_id: ticketId,
+      storage_path: path,
+      sort_order: sortOrder,
+    });
+
+    if (insertError) {
+      console.error("ticket_photos insert failed:", JSON.stringify(insertError));
+      await supabase.storage.from(PHOTO_BUCKET).remove([path]);
+      continue;
+    }
+
+    sortOrder += 1;
+  }
+}
+
 /**
  * Malaysia runs UTC+8 year round, so "today" is evaluated in local time.
  * Judging against UTC would reject a same-day report filed before 8am.
@@ -120,6 +195,7 @@ type WebPayload = {
   agency_reported_at?: string | null;
   language?: string | null;
   voice_note?: { mime?: string; data?: string; duration_ms?: number } | null;
+  photos?: WebPhoto[] | null;
 };
 
 type ResolvedLocation = {
@@ -421,11 +497,21 @@ Deno.serve(async (req) => {
   }
 
   const description = typeof body.description === "string" ? body.description.trim() : "";
-  if (!description) {
-    return jsonResponse({ error: "Description is required" }, 400, origin);
-  }
   if (description.length > 2000) {
     return jsonResponse({ error: "Description must be 2000 characters or fewer" }, 400, origin);
+  }
+
+  const hasVoiceNote =
+    body.voice_note != null &&
+    typeof body.voice_note.data === "string" &&
+    body.voice_note.data.length > 0;
+  // Typed details or a voice note — either is enough to understand the report.
+  if (!description && !hasVoiceNote) {
+    return jsonResponse(
+      { error: "Description or voice note is required" },
+      400,
+      origin,
+    );
   }
 
   const location = await resolveLocation(body);
@@ -482,6 +568,8 @@ Deno.serve(async (req) => {
     console.error("create_or_link_ticket failed:", JSON.stringify(rpcError));
     return jsonResponse({ error: "Unable to save complaint" }, 500, origin);
   }
+
+  await storePhotos(ticket.id as number, body.photos);
 
   return jsonResponse(
     {

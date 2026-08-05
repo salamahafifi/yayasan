@@ -115,9 +115,6 @@ export default function VoiceNoteRecorder({ lang, value, onChange }: Props) {
   return (
     <div className="voice-note">
       <span className="field__label">{t(lang, 'voiceLabel')}</span>
-      <p className="field__note">
-        {t(lang, 'voiceHint', { seconds: MAX_RECORDING_MS / 1000 })}
-      </p>
 
       {recording ? (
         <button type="button" className="voice-note__record voice-note__record--active" onClick={stopRecording}>

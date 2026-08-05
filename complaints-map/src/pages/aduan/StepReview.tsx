@@ -31,6 +31,7 @@ type ReviewRow = {
   label: string;
   value: string;
   step: number;
+  showPhotoThumbs?: boolean;
 };
 
 type Props = {
@@ -146,6 +147,26 @@ export default function StepReview({
     step: 3,
   });
   rows.push({
+    label: t(lang, 'reviewPhotos'),
+    value:
+      data.photos.length > 0
+        ? t(lang, 'reviewPhotosAttached', { count: data.photos.length })
+        : data.noPhotos
+          ? t(lang, 'reviewPhotosNone')
+          : empty,
+    step: 3,
+    showPhotoThumbs: data.photos.length > 0,
+  });
+  rows.push({
+    label: t(lang, 'reviewVoiceNote'),
+    value: data.voiceNote
+      ? t(lang, 'reviewVoiceNoteAttached', {
+          time: formatDuration(data.voiceNote.durationMs),
+        })
+      : empty,
+    step: 3,
+  });
+  rows.push({
     label: t(lang, 'reviewReported'),
     value:
       data.hasReportedBefore === true
@@ -173,16 +194,6 @@ export default function StepReview({
       step: 4,
     });
   }
-
-  rows.push({
-    label: t(lang, 'reviewVoiceNote'),
-    value: data.voiceNote
-      ? t(lang, 'reviewVoiceNoteAttached', {
-          time: formatDuration(data.voiceNote.durationMs),
-        })
-      : empty,
-    step: 3,
-  });
 
   rows.push({
     label: t(lang, 'reviewName'),
@@ -215,8 +226,8 @@ export default function StepReview({
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-    // A voice note is supporting evidence, never a reason to lose the report:
-    // if encoding fails the complaint still goes without it.
+    // Attachments are supporting evidence: if encoding fails, the complaint
+    // still goes through without them rather than being lost entirely.
     let voiceNotePayload: { mime: string; data: string; duration_ms: number } | null =
       null;
     if (data.voiceNote) {
@@ -228,6 +239,18 @@ export default function StepReview({
         };
       } catch {
         voiceNotePayload = null;
+      }
+    }
+
+    const photosPayload: { mime: string; data: string }[] = [];
+    for (const photo of data.photos) {
+      try {
+        photosPayload.push({
+          mime: photo.mime,
+          data: await blobToBase64(photo.blob),
+        });
+      } catch {
+        // Skip this photo; others may still attach.
       }
     }
 
@@ -244,6 +267,7 @@ export default function StepReview({
           turnstile_token: turnstileToken,
           language: lang,
           voice_note: voiceNotePayload,
+          photos: photosPayload,
           category: data.category,
           description: data.description.trim(),
           latitude: data.latitude,
@@ -321,6 +345,15 @@ export default function StepReview({
             <div className="review-list__text">
               <span className="review-list__label">{row.label}</span>
               <span className="review-list__value">{row.value}</span>
+              {row.showPhotoThumbs && (
+                <ul className="review-list__thumbs">
+                  {data.photos.map((photo) => (
+                    <li key={photo.id}>
+                      <img src={photo.url} alt="" className="review-list__thumb" />
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
             <Link className="review-list__edit" to={aduanPath(row.step)}>
               {t(lang, 'reviewEdit')}

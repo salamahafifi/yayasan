@@ -5,6 +5,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { IssueCategory } from '../types/database';
+import type { PhotoAttachment } from '../lib/photos';
 
 export type LocationSource = 'pin' | 'geocoded' | null;
 
@@ -20,7 +21,12 @@ export type AduanFormData = {
   category: IssueCategory | null;
   otherCategoryLabel: string;
   description: string;
+  /** When true, typed description may be blank if a voice note is attached. */
+  preferVoiceNote: boolean;
   voiceNote: VoiceNote | null;
+  photos: PhotoAttachment[];
+  /** Explicit opt-out: proceed with no photos attached. */
+  noPhotos: boolean;
   latitude: number | null;
   longitude: number | null;
   addressText: string;
@@ -38,7 +44,10 @@ const EMPTY_FORM: AduanFormData = {
   category: null,
   otherCategoryLabel: '',
   description: '',
+  preferVoiceNote: false,
   voiceNote: null,
+  photos: [],
+  noPhotos: false,
   latitude: null,
   longitude: null,
   addressText: '',
@@ -66,12 +75,18 @@ export function AduanFormProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<AduanFormData>(EMPTY_FORM);
   const [lastTicketNumber, setLastTicketNumber] = useState<string | null>(null);
 
-  // The recording outlives the step that made it, so its object URL is
-  // released here rather than on unmount, when the note is actually dropped.
+  // Attachments outlive the step that made them, so object URLs are released
+  // here when they are actually dropped, not when the step unmounts.
   function update(patch: Partial<AduanFormData>) {
     setData((prev) => {
       if ('voiceNote' in patch && prev.voiceNote && prev.voiceNote !== patch.voiceNote) {
         URL.revokeObjectURL(prev.voiceNote.url);
+      }
+      if ('photos' in patch && patch.photos) {
+        const nextIds = new Set(patch.photos.map((photo) => photo.id));
+        for (const photo of prev.photos) {
+          if (!nextIds.has(photo.id)) URL.revokeObjectURL(photo.url);
+        }
       }
       return { ...prev, ...patch };
     });
@@ -80,6 +95,7 @@ export function AduanFormProvider({ children }: { children: ReactNode }) {
   function reset() {
     setData((prev) => {
       if (prev.voiceNote) URL.revokeObjectURL(prev.voiceNote.url);
+      for (const photo of prev.photos) URL.revokeObjectURL(photo.url);
       return EMPTY_FORM;
     });
   }

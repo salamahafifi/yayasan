@@ -97,7 +97,6 @@ export default function AppLayout() {
           <a href="/privacy">{t(lang, 'privacy')}</a>
           <a href="/terms">{t(lang, 'terms')}</a>
           <a href="/data-deletion">{t(lang, 'dataDeletion')}</a>
-          <Link to="/semak">{t(lang, 'trackReport')}</Link>
         </nav>
         <p className="app-footer__feedback">
           <FeedbackLink lang={lang} variant="block" />
