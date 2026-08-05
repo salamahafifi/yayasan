@@ -37,6 +37,9 @@ export default function AppLayout() {
   const [lang, setLang] = useState<Lang>(readStoredLang);
   const { pathname } = useLocation();
   const showNavActions = !pathname.startsWith('/aduan');
+  // Form steps already carry a quiet feedback link; the full footer only
+  // belongs on the map and status pages where people are not mid-flow.
+  const showFooter = !pathname.startsWith('/aduan');
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -91,18 +94,20 @@ export default function AppLayout() {
 
       <Outlet context={{ lang, setLang } satisfies AppOutletContext} />
 
-      <footer className="app-footer">
-        <p className="app-footer__managed">{t(lang, 'managedBy')}</p>
-        <nav className="app-footer__links" aria-label="Legal">
-          <a href="/privacy">{t(lang, 'privacy')}</a>
-          <a href="/terms">{t(lang, 'terms')}</a>
-          <a href="/data-deletion">{t(lang, 'dataDeletion')}</a>
-        </nav>
-        <p className="app-footer__feedback">
-          <FeedbackLink lang={lang} variant="block" />
-        </p>
-        <p className="app-footer__meta">{t(lang, 'footerMeta')}</p>
-      </footer>
+      {showFooter && (
+        <footer className="app-footer">
+          <p className="app-footer__managed">{t(lang, 'managedBy')}</p>
+          <nav className="app-footer__links" aria-label="Legal">
+            <a href="/privacy">{t(lang, 'privacy')}</a>
+            <a href="/terms">{t(lang, 'terms')}</a>
+            <a href="/data-deletion">{t(lang, 'dataDeletion')}</a>
+          </nav>
+          <p className="app-footer__feedback">
+            <FeedbackLink lang={lang} variant="block" />
+          </p>
+          <p className="app-footer__meta">{t(lang, 'footerMeta')}</p>
+        </footer>
+      )}
     </div>
   );
 }
