@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import AdminMap from './components/AdminMap';
+import CaseDrawer from './components/CaseDrawer';
 import LoginForm from './components/LoginForm';
 import StaffApprovals from './components/StaffApprovals';
 import TicketTable from './components/TicketTable';
@@ -25,6 +26,9 @@ function Dashboard({
   profile: StaffProfile;
   onSignOut: () => void;
 }) {
+  const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
   return (
     <div className="dashboard">
       <header className="dashboard__header">
@@ -39,10 +43,27 @@ function Dashboard({
         </div>
       </header>
       <main className="dashboard__main">
-        <TicketTable role={profile.role} />
-        <AdminMap />
+        <TicketTable
+          role={profile.role}
+          refreshKey={refreshKey}
+          onSelect={setSelectedTicketId}
+        />
+        <AdminMap
+          role={profile.role}
+          refreshKey={refreshKey}
+          onSelect={setSelectedTicketId}
+        />
         {profile.role === 'admin' && <StaffApprovals />}
       </main>
+      {selectedTicketId != null && (
+        <CaseDrawer
+          key={selectedTicketId}
+          ticketId={selectedTicketId}
+          profile={profile}
+          onClose={() => setSelectedTicketId(null)}
+          onChanged={() => setRefreshKey((value) => value + 1)}
+        />
+      )}
     </div>
   );
 }

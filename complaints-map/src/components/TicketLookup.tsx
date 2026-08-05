@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { supabase } from '../lib/supabase';
 import { formatDateOrDash } from '../lib/format';
-import { STRINGS, formatCategoryLabel, formatStatusLabel, type Lang } from '../lib/i18n';
+import { formatCategoryLabel, formatStatusLabel, t, type Lang } from '../i18n';
 import type { TicketStatusResult } from '../types/database';
 
 type LookupState = 'idle' | 'loading' | 'found' | 'not_found' | 'error';
@@ -16,7 +16,6 @@ function TicketLookup({ lang, onMinimize }: TicketLookupProps) {
   const [state, setState] = useState<LookupState>('idle');
   const [result, setResult] = useState<TicketStatusResult | null>(null);
   const [queriedNumber, setQueriedNumber] = useState('');
-  const t = STRINGS[lang];
 
   async function handleSearch(e: FormEvent) {
     e.preventDefault();
@@ -50,15 +49,15 @@ function TicketLookup({ lang, onMinimize }: TicketLookupProps) {
   return (
     <div className="ticket-lookup">
       <div className="ticket-lookup__header">
-        <p className="ticket-lookup__title">{t.trackReport}</p>
+        <p className="ticket-lookup__title">{t(lang, 'trackReport')}</p>
         {onMinimize && (
           <button
             type="button"
             className="map-overlay__toggle"
             onClick={onMinimize}
-            aria-label={t.hidePanel}
+            aria-label={t(lang, 'hidePanel')}
             aria-expanded={true}
-            title={t.hidePanel}
+            title={t(lang, 'hidePanel')}
           >
             −
           </button>
@@ -73,29 +72,36 @@ function TicketLookup({ lang, onMinimize }: TicketLookupProps) {
           className="ticket-lookup__input"
         />
         <button type="submit" className="ticket-lookup__button">
-          {t.check}
+          {t(lang, 'check')}
         </button>
       </form>
 
-      {state === 'not_found' && <p className="ticket-lookup__message">{t.notFound}</p>}
-      {state === 'error' && <p className="ticket-lookup__message">{t.error}</p>}
+      {state === 'not_found' && (
+        <p className="ticket-lookup__message">{t(lang, 'notFound')}</p>
+      )}
+      {state === 'error' && (
+        <p className="ticket-lookup__message">{t(lang, 'error')}</p>
+      )}
 
       {state === 'found' && result && (
         <div className="ticket-lookup__result">
           <p>
-            <strong>{t.ticket}:</strong> {queriedNumber}
+            <strong>{t(lang, 'ticket')}:</strong> {queriedNumber}
           </p>
           <p>
-            <strong>{t.typeOfComplaint}:</strong> {formatCategoryLabel(result.category, lang)}
+            <strong>{t(lang, 'typeOfComplaint')}:</strong>{' '}
+            {formatCategoryLabel(result.category, lang)}
           </p>
           <p>
-            <strong>{t.status}:</strong> {formatStatusLabel(result.status, lang)}
+            <strong>{t(lang, 'status')}:</strong>{' '}
+            {formatStatusLabel(result.status, lang)}
           </p>
           <p>
-            <strong>{t.firstDate}:</strong> {formatDateOrDash(result.first_reported_at)}
+            <strong>{t(lang, 'firstDate')}:</strong>{' '}
+            {formatDateOrDash(result.first_reported_at)}
           </p>
           <p>
-            <strong>{t.daysOutstanding}:</strong>{' '}
+            <strong>{t(lang, 'daysOutstanding')}:</strong>{' '}
             {result.days_outstanding == null ? '—' : result.days_outstanding}
           </p>
         </div>

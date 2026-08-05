@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { STRINGS, type Lang } from '../lib/i18n';
+import { t, type Lang } from '../i18n';
 
 type PhotoGalleryProps = {
   photos: string[];
@@ -10,7 +10,6 @@ type PhotoGalleryProps = {
 
 function PhotoGallery({ photos, label, lang }: PhotoGalleryProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const t = STRINGS[lang];
 
   const close = useCallback(() => setActiveIndex(null), []);
 
@@ -48,7 +47,12 @@ function PhotoGallery({ photos, label, lang }: PhotoGalleryProps) {
               aria-modal="true"
               aria-label={label}
             >
-              <button type="button" className="photo-gallery__close" onClick={close} aria-label={t.galleryClose}>
+              <button
+                type="button"
+                className="photo-gallery__close"
+                onClick={close}
+                aria-label={t(lang, 'galleryClose')}
+              >
                 ×
               </button>
               <img
@@ -58,13 +62,16 @@ function PhotoGallery({ photos, label, lang }: PhotoGalleryProps) {
               />
               <div className="photo-gallery__controls">
                 <button type="button" className="photo-gallery__nav" onClick={showPrev}>
-                  {t.galleryPrev}
+                  {t(lang, 'galleryPrev')}
                 </button>
                 <span className="photo-gallery__counter">
-                  {t.galleryCounter(activeIndex + 1, photos.length)}
+                  {t(lang, 'galleryCounter', {
+                    current: activeIndex + 1,
+                    total: photos.length,
+                  })}
                 </span>
                 <button type="button" className="photo-gallery__nav" onClick={showNext}>
-                  {t.galleryNext}
+                  {t(lang, 'galleryNext')}
                 </button>
               </div>
             </div>
@@ -81,11 +88,10 @@ function PhotoGallery({ photos, label, lang }: PhotoGalleryProps) {
       <div className="photo-gallery__thumbs">
         {photos.map((url, index) => (
           <button
-            key={`${url}-${index}`}
+            key={url}
             type="button"
             className="photo-gallery__thumb-btn"
             onClick={() => setActiveIndex(index)}
-            aria-label={`${label} ${index + 1}`}
           >
             <img src={url} alt="" className="photo-gallery__thumb" />
           </button>

@@ -20,6 +20,7 @@ export type PublicTicket = {
   first_reported_at: string | null;
   days_outstanding: number | null;
   parent_ticket_id: number | null;
+  needs_location: boolean;
 };
 
 /** Row from get_ticket_status RPC (Semak). */
@@ -34,8 +35,8 @@ export type TicketStatusResult = {
 export type PublicTicketPhoto = {
   ticket_id: number;
   root_ticket_id: number;
-  photo_url: string;
+  public_path: string;
 };
 
 export const PUBLIC_TICKET_COLUMNS =
-  'id, category, status, latitude, longitude, agency, report_count, first_reported_at, days_outstanding, parent_ticket_id';
+  'id, category, status, latitude, longitude, agency, report_count, first_reported_at, days_outstanding, parent_ticket_id, needs_location';

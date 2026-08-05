@@ -14,6 +14,11 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     description_prompt: "Sila terangkan isu ini, anda boleh menaip, menghantar foto, atau nota suara.",
     tap_option_error: "Maaf, sila ketik salah satu pilihan di atas.",
     location_invalid_error: "Maaf, itu bukan pin lokasi, alamat, atau arahan yang dikenali.",
+    geocode_found: "Kami jumpa: {place}\n\nBetul?",
+    geocode_not_found:
+      "Maaf, kami tidak dapat mencari alamat itu. Sila hantar pin lokasi: ketik 📎, pilih 'Lokasi', gerakkan pin jika perlu, kemudian hantar.",
+    geocode_yes_button: "Ya, betul",
+    geocode_no_button: "Bukan, hantar pin",
     description_required_error: "Sila taip penerangan ringkas tentang isu ini.",
     submit_success: "Terima kasih! Laporan anda telah direkodkan sebagai {ticket_number}. Kami akan menghubungi anda jika ada kemas kini.",
     submit_error: "Maaf, terdapat ralat semasa menyimpan laporan anda. Sila cuba sebentar lagi.",
@@ -76,6 +81,11 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     description_prompt: "Please describe the issue, you can type, send a photo, or a voice note.",
     tap_option_error: "Sorry, please tap one of the options above.",
     location_invalid_error: "Sorry, that wasn't a location pin, an address, or a recognised command.",
+    geocode_found: "We found: {place}\n\nIs this correct?",
+    geocode_not_found:
+      "Sorry, we could not find that address. Please send a location pin: tap 📎, choose 'Location', move the pin if needed, then send.",
+    geocode_yes_button: "Yes, correct",
+    geocode_no_button: "No, send a pin",
     description_required_error: "Please type a short description of the issue.",
     submit_success: "Thank you! Your report has been logged as {ticket_number}. We'll follow up if there's an update.",
     submit_error: "Sorry, something went wrong while saving your report. Please try again in a moment.",
@@ -138,6 +148,10 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     description_prompt: "请描述该问题,您可以输入文字、发送照片或语音留言。",
     tap_option_error: "抱歉,请点击上面的选项之一。",
     location_invalid_error: "抱歉,这不是位置定位、地址或可识别的指令。",
+    geocode_found: "我们找到:{place}\n\n正确吗?",
+    geocode_not_found: "抱歉,找不到该地址。请发送位置定位:点击📎,选择“位置”,必要时移动定位,然后发送。",
+    geocode_yes_button: "是,正确",
+    geocode_no_button: "不,发送定位",
     description_required_error: "请输入该问题的简短描述。",
     submit_success: "谢谢!您的报告已记录为 {ticket_number}。如有更新,我们会通知您。",
     submit_error: "抱歉,保存您的报告时出现问题。请稍后再试。",
@@ -194,6 +208,11 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     description_prompt: "சிக்கலை விவரிக்கவும்; நீங்கள் தட்டச்சு செய்யலாம், புகைப்படம் அல்லது குரல் குறிப்பு அனுப்பலாம்.",
     tap_option_error: "மேலே உள்ள விருப்பங்களில் ஒன்றைத் தட்டவும்.",
     location_invalid_error: "மன்னிக்கவும், அது இருப்பிடப் பின், முகவரி அல்லது அறியப்பட்ட கட்டளை அல்ல.",
+    geocode_found: "நாங்கள் கண்டது: {place}\n\nஇது சரியா?",
+    geocode_not_found:
+      "மன்னிக்கவும், அந்த முகவரியைக் கண்டுபிடிக்க முடியவில்லை. 📎 தட்டி 'Location' தேர்வு செய்து இருப்பிடப் பின்னை அனுப்பவும்.",
+    geocode_yes_button: "ஆம், சரி",
+    geocode_no_button: "இல்லை, பின் அனுப்பு",
     description_required_error: "சிக்கலின் சுருக்கமான விளக்கத்தைத் தட்டச்சு செய்யவும்.",
     submit_success: "நன்றி! உங்கள் புகார் {ticket_number} எனப் பதிவு செய்யப்பட்டுள்ளது. புதுப்பிப்பு இருந்தால் தெரிவிப்போம்.",
     submit_error: "மன்னிக்கவும், உங்கள் புகாரைச் சேமிப்பதில் சிக்கல் ஏற்பட்டது. சிறிது நேரத்தில் முயற்சிக்கவும்.",
@@ -297,6 +316,7 @@ const CLEAR_CATEGORY_ONWARDS = {
   latitude: null,
   longitude: null,
   address_text: null,
+  location_source: null,
   name: null,
   contactable: null,
   agency: null,
@@ -314,6 +334,58 @@ function isSkip(text: string | undefined): boolean {
 
 function isAgencyNaReply(replyId: string | undefined, text: string | undefined): boolean {
   return replyId === "agency_na" || isSkip(text);
+}
+
+type GeocodeResult = {
+  latitude: number;
+  longitude: number;
+  displayName: string;
+};
+
+async function geocodeAddress(address: string, lang: Lang): Promise<GeocodeResult | null> {
+  const { data: waitMs, error: reserveError } = await supabase.rpc("reserve_nominatim_slot");
+  if (reserveError) {
+    console.error("Nominatim slot reservation failed:", JSON.stringify(reserveError));
+    return null;
+  }
+
+  if (typeof waitMs === "number" && waitMs > 0) {
+    await new Promise((resolve) => setTimeout(resolve, waitMs));
+  }
+
+  const params = new URLSearchParams({
+    q: `${address}, Johor, Malaysia`,
+    format: "jsonv2",
+    limit: "1",
+    addressdetails: "1",
+    countrycodes: "my",
+    viewbox: "102.4,2.8,104.8,1.2",
+    bounded: "0",
+    email: "admin@sahkan.my",
+  });
+
+  const response = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
+    headers: {
+      "User-Agent": "SahkanAduanWhatsApp/1.0 (contact: admin@sahkan.my)",
+      "Accept-Language": lang,
+      "Accept": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    console.error("Nominatim geocode failed:", response.status, await response.text());
+    return null;
+  }
+
+  const results = await response.json();
+  const first = Array.isArray(results) ? results[0] : null;
+  const latitude = Number(first?.lat);
+  const longitude = Number(first?.lon);
+  if (!first?.display_name || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return null;
+  }
+
+  return { latitude, longitude, displayName: first.display_name };
 }
 
 /** Parse rough dates: YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY. */
@@ -357,6 +429,25 @@ async function setMessagingOptedOut(whatsappNumber: string) {
     .eq("whatsapp_number", whatsappNumber);
 }
 
+function outboundBody(payload: Record<string, any>): string | null {
+  if (payload.type === "text") return payload.text?.body ?? null;
+  if (payload.type === "interactive") return payload.interactive?.body?.text ?? null;
+  return null;
+}
+
+async function logWhatsAppMessage(row: {
+  whatsapp_number: string;
+  direction: "inbound" | "outbound";
+  wa_message_id?: string | null;
+  body?: string | null;
+  media_type?: string | null;
+}) {
+  const { error } = await supabase.from("whatsapp_messages").insert(row);
+  if (error && error.code !== "23505") {
+    console.error("WhatsApp message log failed:", JSON.stringify(error));
+  }
+}
+
 async function sendWhatsAppMessage(to: string, payload: Record<string, unknown>) {
   if (await isMessagingOptedOut(to)) {
     console.log("Skip WhatsApp send; messaging opted out:", to);
@@ -371,7 +462,19 @@ async function sendWhatsAppMessage(to: string, payload: Record<string, unknown>)
     },
     body: JSON.stringify({ messaging_product: "whatsapp", to, ...payload }),
   });
-  if (!res.ok) console.error("WhatsApp send failed:", await res.text());
+  if (!res.ok) {
+    console.error("WhatsApp send failed:", await res.text());
+    return;
+  }
+
+  const result = await res.json();
+  await logWhatsAppMessage({
+    whatsapp_number: to,
+    direction: "outbound",
+    wa_message_id: result?.messages?.[0]?.id ?? null,
+    body: outboundBody(payload),
+    media_type: String(payload.type ?? "unknown"),
+  });
 }
 
 /** Bypass opt-out check for the single STOP/DELETE confirmation replies. */
@@ -384,7 +487,19 @@ async function sendWhatsAppMessageForced(to: string, payload: Record<string, unk
     },
     body: JSON.stringify({ messaging_product: "whatsapp", to, ...payload }),
   });
-  if (!res.ok) console.error("WhatsApp send failed:", await res.text());
+  if (!res.ok) {
+    console.error("WhatsApp send failed:", await res.text());
+    return;
+  }
+
+  const result = await res.json();
+  await logWhatsAppMessage({
+    whatsapp_number: to,
+    direction: "outbound",
+    wa_message_id: result?.messages?.[0]?.id ?? null,
+    body: outboundBody(payload),
+    media_type: String(payload.type ?? "unknown"),
+  });
 }
 
 function sendText(to: string, text: string) {
@@ -442,6 +557,13 @@ function sendLocationPrompt(to: string, lang: Lang) {
   return sendText(to, STRINGS[lang].location_prompt);
 }
 
+function sendGeocodeConfirmation(to: string, lang: Lang, place: string) {
+  return sendButtons(to, STRINGS[lang].geocode_found.replace("{place}", place), [
+    { id: "geocode_yes", title: STRINGS[lang].geocode_yes_button },
+    { id: "geocode_no", title: STRINGS[lang].geocode_no_button },
+  ]);
+}
+
 function sendDescriptionPrompt(to: string, lang: Lang) {
   return sendText(to, STRINGS[lang].description_prompt);
 }
@@ -470,11 +592,11 @@ async function deleteStagedMedia(session: { photo_url?: string | null; voice_not
   if (session.photo_url) {
     const marker = "/ticket-photos/";
     const idx = session.photo_url.indexOf(marker);
-    if (idx !== -1) {
-      const path = session.photo_url.slice(idx + marker.length).split("?")[0];
-      const { error } = await supabase.storage.from("ticket-photos").remove([path]);
-      if (error) console.error("Failed to delete staged photo:", JSON.stringify(error));
-    }
+    const path = idx === -1
+      ? session.photo_url
+      : session.photo_url.slice(idx + marker.length).split("?")[0];
+    const { error } = await supabase.storage.from("ticket-photos").remove([path]);
+    if (error) console.error("Failed to delete staged photo:", JSON.stringify(error));
   }
   if (session.voice_note_url) {
     const path = session.voice_note_url.split("?")[0];
@@ -552,9 +674,6 @@ async function uploadTicketMedia(bucket: string, mediaId: string, bytes: Uint8Ar
     return null;
   }
 
-  if (bucket === "ticket-photos") {
-    return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
-  }
   return path;
 }
 
@@ -589,6 +708,7 @@ async function handleSubmit(
     latitude: number | null;
     longitude: number | null;
     address_text: string | null;
+    location_source: "pin" | "geocoded" | null;
     language: string;
     photo_url: string | null;
     voice_note_url: string | null;
@@ -606,8 +726,26 @@ async function handleSubmit(
   whatsappMessageId: string,
   profileName: string | null,
 ) {
+  if (
+    session.latitude == null ||
+    session.longitude == null ||
+    (session.location_source !== "pin" && session.location_source !== "geocoded")
+  ) {
+    await supabase
+      .from("conversation_sessions")
+      .update({
+        latitude: null,
+        longitude: null,
+        address_text: null,
+        location_source: null,
+        step: "location",
+      })
+      .eq("whatsapp_number", from);
+    await sendText(from, STRINGS[lang].geocode_not_found);
+    return;
+  }
+
   const { data: ticket, error } = await supabase.rpc("create_or_link_ticket", {
-    p_whatsapp_number: from,
     p_category: session.category,
     p_description: session.description,
     p_latitude: session.latitude,
@@ -615,10 +753,13 @@ async function handleSubmit(
     p_name: session.name ?? profileName,
     p_language: session.language,
     p_address_text: session.address_text,
-    p_photo_url: session.photo_url ?? null,
+    p_location_source: session.location_source,
+    p_photo_url: null,
     p_voice_note_url: session.voice_note_url ?? null,
     p_contactable: session.contactable ?? true,
-    p_whatsapp_message_id: whatsappMessageId,
+    p_source_message_id: whatsappMessageId,
+    p_source: "whatsapp",
+    p_contact_number: from,
     p_agency: session.agency ?? null,
     p_agency_ref: session.agency_ref ?? null,
     p_agency_reported_at: session.agency_reported_at ?? null,
@@ -635,6 +776,15 @@ async function handleSubmit(
   }
 
   console.log("Ticket created/linked:", JSON.stringify(ticket));
+
+  if (session.photo_url) {
+    const { error: photoError } = await supabase.from("ticket_photos").insert({
+      ticket_id: ticket.id,
+      storage_path: session.photo_url,
+      sort_order: 0,
+    });
+    if (photoError) console.error("ticket_photos insert failed:", JSON.stringify(photoError));
+  }
 
   await sendText(from, STRINGS[lang].submit_success.replace("{ticket_number}", ticket.ticket_number));
 
@@ -685,6 +835,19 @@ Deno.serve(async (req) => {
       const text = message.text?.body?.trim();
       const replyId = message.interactive?.list_reply?.id ?? message.interactive?.button_reply?.id;
       const lowerText = text?.toLowerCase();
+
+      await logWhatsAppMessage({
+        whatsapp_number: from,
+        direction: "inbound",
+        wa_message_id: message.id ?? null,
+        body:
+          text ??
+          message.image?.caption?.trim() ??
+          message.interactive?.list_reply?.title ??
+          message.interactive?.button_reply?.title ??
+          null,
+        media_type: message.type ?? null,
+      });
 
       const { data: session } = await supabase
         .from("conversation_sessions")
@@ -771,12 +934,68 @@ Deno.serve(async (req) => {
       } else if (session.step === "location") {
         if (message.type === "location" && message.location) {
           const { latitude, longitude } = message.location;
-          await advanceFromLocation(from, session, { latitude, longitude, address_text: null }, lang);
+          await advanceFromLocation(
+            from,
+            session,
+            { latitude, longitude, address_text: null, location_source: "pin" },
+            lang,
+          );
         } else if (text) {
-          await advanceFromLocation(from, session, { address_text: text, latitude: null, longitude: null }, lang);
+          const result = await geocodeAddress(text, lang);
+          if (result) {
+            await supabase
+              .from("conversation_sessions")
+              .update({
+                address_text: result.displayName,
+                latitude: result.latitude,
+                longitude: result.longitude,
+                location_source: "geocoded",
+                step: "location_confirm",
+              })
+              .eq("whatsapp_number", from);
+            await sendGeocodeConfirmation(from, lang, result.displayName);
+          } else {
+            await supabase
+              .from("conversation_sessions")
+              .update({
+                address_text: null,
+                latitude: null,
+                longitude: null,
+                location_source: null,
+                step: "location",
+              })
+              .eq("whatsapp_number", from);
+            await sendText(from, STRINGS[lang].geocode_not_found);
+          }
         } else {
           await sendText(from, STRINGS[lang].location_invalid_error);
           await sendLocationPrompt(from, lang);
+        }
+      } else if (session.step === "location_confirm") {
+        if (replyId === "geocode_yes") {
+          await advanceFromLocation(from, session, {}, lang);
+        } else if (replyId === "geocode_no") {
+          await supabase
+            .from("conversation_sessions")
+            .update({
+              address_text: null,
+              latitude: null,
+              longitude: null,
+              location_source: null,
+              step: "location",
+            })
+            .eq("whatsapp_number", from);
+          await sendLocationPrompt(from, lang);
+        } else if (message.type === "location" && message.location) {
+          const { latitude, longitude } = message.location;
+          await advanceFromLocation(
+            from,
+            session,
+            { latitude, longitude, address_text: null, location_source: "pin" },
+            lang,
+          );
+        } else {
+          await sendGeocodeConfirmation(from, lang, session.address_text ?? "");
         }
       } else if (session.step === "description") {
         if (message.type === "image" && message.image) {

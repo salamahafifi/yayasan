@@ -1,0 +1,126 @@
+/*
+  Brand tokens extracted from https://bersama.org compiled CSS
+  (@layer theme :root in /_next/static/chunks/*.css), 2026-08-05.
+
+  Exact theme declarations:
+    --color-primary-blue: #202070;
+    --color-secondary-blue: #14144a;
+    --color-primary-yellow: #eebd00;
+    --color-primary-text: #555;
+    --font-arial: "Arial", sans-serif;
+    --font-arial-black: "Arial Black", "Arial Bold", sans-serif;
+    --font-cabinet: "Cabinet Grotesk", sans-serif;
+*/
+
+@font-face {
+  font-family: 'Cabinet Grotesk';
+  src: url('/fonts/CabinetGrotesk-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cabinet Grotesk';
+  src: url('/fonts/CabinetGrotesk-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cabinet Grotesk';
+  src: url('/fonts/CabinetGrotesk-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cabinet Grotesk';
+  src: url('/fonts/CabinetGrotesk-Extrabold.woff2') format('woff2');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cabinet Grotesk';
+  src: url('/fonts/CabinetGrotesk-Black.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* Brand — bersama.org theme */
+  --color-primary-blue: #202070;
+  --color-secondary-blue: #14144a;
+  --color-primary-yellow: #eebd00;
+  --color-primary-text: #555;
+
+  /* Neutrals from bersama.org :root (light) */
+  --color-foreground: #0a0a0a;
+  --color-muted-foreground: #737373;
+  --color-border: #e5e5e5;
+  --color-muted: #f5f5f5;
+  --color-card: #ffffff;
+  --color-background: #ffffff;
+  --color-neutral-900: #171717;
+  --color-neutral-800: #262626;
+  --color-neutral-400: #a1a1a1;
+  --color-neutral-200: #e5e5e5;
+  --color-destructive: #e40014;
+
+  /*
+    Pink action accent (supplied).
+    Rules:
+    1. Never place pink on the yellow header (#eebd00) — contrast vibrates and fails.
+    2. Never use pink in the map pin / category palette — action colour ≠ category.
+  */
+  --color-accent-pink: #e0006e;
+  --color-accent-pink-hover: #b80059;
+  --color-accent-pink-tint: #ffe8f2;
+
+  /* Semantic aliases used by the app */
+  --color-surface: var(--color-card);
+  --color-text: var(--color-foreground);
+  --color-text-muted: var(--color-muted-foreground);
+  --color-text-subtle: var(--color-neutral-400);
+  /* Brand chrome (header, links): blue */
+  --color-primary: var(--color-primary-blue);
+  --color-primary-hover: var(--color-secondary-blue);
+  --color-on-primary: var(--color-card);
+  --color-accent: var(--color-primary-yellow);
+  --color-on-accent: var(--color-primary-blue);
+  /* Action CTAs / progress active: pink — not for header or map pins */
+  --color-action: var(--color-accent-pink);
+  --color-action-hover: var(--color-accent-pink-hover);
+  --color-action-tint: var(--color-accent-pink-tint);
+  --color-on-action: var(--color-card);
+  --color-danger: var(--color-destructive);
+  --color-overlay-border: var(--color-border);
+  --color-overlay-bg: color-mix(in srgb, var(--color-card) 95%, transparent);
+  --color-lightbox-bg: color-mix(in srgb, var(--color-foreground) 88%, transparent);
+  --color-lightbox-panel: var(--color-neutral-900);
+  --color-marker-stroke: var(--color-card);
+
+  /* Map category colours — must never include accent-pink */
+  --color-category-longkang_tersumbat: #0e7490;
+  --color-category-jalan_berlubang: #b45309;
+  --color-category-lampu_jalan: #ca8a04;
+  --color-category-sampah: #6d28d9;
+  --color-category-semak: #166534;
+  --color-category-lain_lain: #57534e;
+
+  /* Fonts — names match bersama.org theme; faces self-hosted or Google Fonts */
+  --font-arial: 'Arial', sans-serif;
+  --font-arial-black: 'Arial Black', 'Arial Bold', sans-serif;
+  --font-cabinet: 'Cabinet Grotesk', sans-serif;
+  --font-dm-sans: 'DM Sans', 'Arial', sans-serif;
+  --font-fraunces: 'Fraunces', 'Times New Roman', serif;
+
+  --font-display: var(--font-cabinet);
+  --font-body: var(--font-dm-sans);
+  --font-ui: var(--font-arial);
+}
