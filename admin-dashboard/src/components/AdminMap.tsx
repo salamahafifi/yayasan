@@ -109,7 +109,7 @@ function AdminMap({ role, refreshKey, onSelect }: AdminMapProps) {
               radius={7}
               pathOptions={{
                 color: '#FFFFFF',
-                fillColor: STATUS_COLORS[ticket.status],
+                fillColor: STATUS_COLORS[ticket.status] ?? '#64748B',
                 fillOpacity: 0.9,
                 weight: 2,
               }}
@@ -118,7 +118,7 @@ function AdminMap({ role, refreshKey, onSelect }: AdminMapProps) {
               <Popup>
                 <button className="admin-map__popup" type="button" onClick={() => onSelect(ticket.id)}>
                   <strong>{ticket.ticket_number}</strong>
-                  <span>{STATUS_LABELS[ticket.status]}</span>
+                  <span>{STATUS_LABELS[ticket.status] ?? ticket.status}</span>
                 </button>
               </Popup>
             </CircleMarker>

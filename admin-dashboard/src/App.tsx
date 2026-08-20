@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import AdminMap from './components/AdminMap';
 import CaseDrawer from './components/CaseDrawer';
@@ -7,6 +7,34 @@ import StaffApprovals from './components/StaffApprovals';
 import TicketTable from './components/TicketTable';
 import { supabase } from './lib/supabase';
 import type { StaffProfile } from './types/database';
+
+class AdminMapErrorBoundary extends Component<
+  { children: ReactNode },
+  { message: string | null }
+> {
+  state = { message: null as string | null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { message: error.message || 'Map failed to load' };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('AdminMap crashed', error, info);
+  }
+
+  render() {
+    if (this.state.message) {
+      return (
+        <section className="admin-map">
+          <p className="status-text status-text--error">
+            Map error: {this.state.message}
+          </p>
+        </section>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function PendingApproval({ onSignOut }: { onSignOut: () => void }) {
   return (
@@ -51,11 +79,13 @@ function Dashboard({
           refreshKey={refreshKey}
           onSelect={setSelectedTicketId}
         />
-        <AdminMap
-          role={profile.role}
-          refreshKey={refreshKey}
-          onSelect={setSelectedTicketId}
-        />
+        <AdminMapErrorBoundary>
+          <AdminMap
+            role={profile.role}
+            refreshKey={refreshKey}
+            onSelect={setSelectedTicketId}
+          />
+        </AdminMapErrorBoundary>
         {profile.role === 'admin' && <StaffApprovals />}
       </main>
       {selectedTicketId != null && (

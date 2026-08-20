@@ -180,7 +180,7 @@ function TicketTable({ role, refreshKey, onSelect }: TicketTableProps) {
                 >
                   <td>{ticket.ticket_number}</td>
                   <td>{CATEGORY_LABELS[ticket.category]}</td>
-                  <td>{STATUS_LABELS[ticket.status]}</td>
+                  <td>{STATUS_LABELS[ticket.status] ?? ticket.status}</td>
                   <td>{ticket.is_public ? 'Yes' : 'No'}</td>
                   <td>{PRIORITY_LABELS[ticket.adun_priority]}</td>
                   {canSeePii && (

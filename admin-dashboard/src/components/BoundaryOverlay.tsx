@@ -16,6 +16,8 @@ export const PULAI_BOUNDARY_COLOR = '#c9a227';
 /** @deprecated Use KEMPAS_BOUNDARY_COLOR */
 export const BOUNDARY_COLOR = KEMPAS_BOUNDARY_COLOR;
 
+const BOUNDARIES_PANE = 'boundaries';
+
 type BoundaryLayerProps = {
   data: FeatureCollection;
   color: string;
@@ -45,22 +47,26 @@ function boundaryStyle(
   };
 }
 
+function ensureBoundariesPane(map: ReturnType<typeof useMap>) {
+  // Must exist before any GeoJSON mounts with pane="boundaries".
+  let pane = map.getPane(BOUNDARIES_PANE);
+  if (!pane) {
+    pane = map.createPane(BOUNDARIES_PANE);
+    pane.style.zIndex = '450';
+    pane.style.pointerEvents = 'none';
+  }
+  return pane;
+}
+
 function BoundaryLayer({ data, color, weightBoost = 0, dashArray }: BoundaryLayerProps) {
   const map = useMap();
   const layerRef = useRef<LeafletGeoJSON | null>(null);
 
   useEffect(() => {
-    // Dedicated pane keeps constituency lines above basemap tiles.
-    if (!map.getPane('boundaries')) {
-      const pane = map.createPane('boundaries');
-      pane.style.zIndex = '450';
-      pane.style.pointerEvents = 'none';
-    }
-  }, [map]);
-
-  useEffect(() => {
     const apply = () => {
-      layerRef.current?.setStyle(boundaryStyle(map.getZoom(), color, { weightBoost, dashArray }));
+      layerRef.current?.setStyle(
+        boundaryStyle(map.getZoom(), color, { weightBoost, dashArray }),
+      );
     };
     apply();
     map.on('zoom zoomend', apply);
@@ -73,16 +79,18 @@ function BoundaryLayer({ data, color, weightBoost = 0, dashArray }: BoundaryLaye
     <GeoJSON
       ref={layerRef}
       data={data}
-      pane="boundaries"
-      style={() => boundaryStyle(map.getZoom(), color, { weightBoost, dashArray })}
+      pane={BOUNDARIES_PANE}
+      pathOptions={boundaryStyle(map.getZoom(), color, { weightBoost, dashArray })}
     />
   );
 }
 
 function BoundaryOverlay() {
+  const map = useMap();
+  ensureBoundariesPane(map);
+
   return (
     <>
-      {/* Outer Pulai first so DUN colours draw on top */}
       <BoundaryLayer
         data={pulaiBoundary}
         color={PULAI_BOUNDARY_COLOR}
