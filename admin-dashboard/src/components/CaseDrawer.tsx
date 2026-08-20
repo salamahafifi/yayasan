@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { CircleMarker, MapContainer, TileLayer, useMapEvents } from 'react-leaflet';
 import { supabase } from '../lib/supabase';
-import { CATEGORY_LABELS, PRIORITY_LABELS, STATUS_LABELS, formatDate } from '../lib/format';
+import { CATEGORY_LABELS, EDIT_FIELD_LABELS, PRIORITY_LABELS, STATUS_LABELS, formatDate, formatEditValue } from '../lib/format';
 import { normalizeTicketPhotoPath } from '../lib/photos';
+import { phoneLookupVariants } from '../lib/phone';
 import {
   STAFF_TICKET_COLUMNS,
   VIEWER_TICKET_COLUMNS,
@@ -14,12 +15,20 @@ import {
   type StaffDirectoryEntry,
   type StaffProfile,
   type Ticket,
+  type TicketEditLogEntry,
   type TicketPhoto,
   type TicketStatus,
   type WhatsAppMessage,
 } from '../types/database';
 
-const STATUS_OPTIONS: TicketStatus[] = ['baru', 'siasat', 'majlis_perbandaran', 'selesai', 'tangguh'];
+const STATUS_OPTIONS: TicketStatus[] = [
+  'baru',
+  'siasat',
+  'majlis_perbandaran',
+  'selesai',
+  'tangguh',
+  'arkib',
+];
 const CATEGORY_OPTIONS = Object.keys(CATEGORY_LABELS) as IssueCategory[];
 const PRIORITY_OPTIONS = Object.keys(PRIORITY_LABELS) as PriorityLevel[];
 const FALLBACK_CENTER: [number, number] = [1.5146529, 103.6854368];
@@ -74,10 +83,12 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
   const [ticket, setTicket] = useState<Ticket | SafeTicket | null>(null);
   const [directory, setDirectory] = useState<StaffDirectoryEntry[]>([]);
   const [notes, setNotes] = useState<CaseNote[]>([]);
+  const [editLog, setEditLog] = useState<TicketEditLogEntry[]>([]);
   const [photos, setPhotos] = useState<TicketPhoto[]>([]);
   const [messages, setMessages] = useState<WhatsAppMessage[]>([]);
   const [noteBody, setNoteBody] = useState('');
   const [pendingPin, setPendingPin] = useState<[number, number] | null>(null);
+  const [pendingAddress, setPendingAddress] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [photoBusyId, setPhotoBusyId] = useState<number | null>(null);
@@ -130,7 +141,10 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
     setTicket(loadedTicket);
     if (loadedTicket.latitude != null && loadedTicket.longitude != null) {
       setPendingPin([loadedTicket.latitude, loadedTicket.longitude]);
+    } else {
+      setPendingPin(null);
     }
+    setPendingAddress(loadedTicket.address_text ?? '');
     if (canAdmin && 'description' in loadedTicket) {
       setDraft(draftFromTicket(loadedTicket as Ticket));
     }
@@ -161,7 +175,11 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
       }[];
       const familyIds = family.map((row) => row.id);
 
-      const [noteResult, photoResult, messageResult] = await Promise.all([
+      const phoneVariants = fullTicket.contact_number
+        ? phoneLookupVariants(fullTicket.contact_number)
+        : [];
+
+      const [noteResult, photoResult, messageResult, editLogResult] = await Promise.all([
         supabase
           .from('case_notes_with_author')
           .select('id, ticket_id, author_id, author_name, body, created_at')
@@ -173,20 +191,27 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
           .in('ticket_id', familyIds)
           .order('sort_order', { ascending: true })
           .order('created_at', { ascending: true }),
-        fullTicket.contact_number
+        phoneVariants.length > 0
           ? supabase
             .from('whatsapp_messages')
             .select('id, direction, body, media_type, created_at')
-            .eq('whatsapp_number', fullTicket.contact_number)
+            .in('whatsapp_number', phoneVariants)
             .order('created_at')
           : Promise.resolve({ data: [] as WhatsAppMessage[], error: null }),
+        supabase
+          .from('ticket_edit_log_with_actor')
+          .select('id, ticket_id, actor_id, actor_name, field_name, old_value, new_value, created_at')
+          .eq('ticket_id', ticketId)
+          .order('created_at', { ascending: false })
+          .limit(100),
       ]);
 
-      if (noteResult.error || photoResult.error || messageResult.error) {
+      if (noteResult.error || photoResult.error || messageResult.error || editLogResult.error) {
         setError(
           noteResult.error?.message
             ?? photoResult.error?.message
             ?? messageResult.error?.message
+            ?? editLogResult.error?.message
             ?? null,
         );
       }
@@ -223,8 +248,13 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
       }
 
       setNotes((noteResult.data ?? []) as CaseNote[]);
+      setEditLog((editLogResult.data ?? []) as TicketEditLogEntry[]);
       await loadPhotoUrls(photoRows);
       setMessages((messageResult.data ?? []) as WhatsAppMessage[]);
+    } else {
+      setNotes([]);
+      setEditLog([]);
+      setMessages([]);
     }
     setLoading(false);
   }, [canAdmin, canEdit, loadPhotoUrls, ticketId]);
@@ -266,13 +296,21 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
   ) {
     if (!canEdit || !ticket) return;
     setSaving(true);
-    const { error: updateError } = await supabase.from('tickets').update(patch).eq('id', ticket.id);
+    const nextPatch =
+      patch.status === 'arkib' ? { ...patch, is_public: false } : patch;
+    const { error: updateError } = await supabase
+      .from('tickets')
+      .update(nextPatch)
+      .eq('id', ticket.id);
     setSaving(false);
     if (updateError) {
       setError(updateError.message);
       return;
     }
-    setTicket({ ...ticket, ...patch });
+    setTicket({ ...ticket, ...nextPatch });
+    if (draft && nextPatch.is_public === false) {
+      setDraft({ ...draft, is_public: false });
+    }
     onChanged();
   }
 
@@ -291,7 +329,7 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
       agency_ref: draft.agency_ref.trim() || null,
       agency_reported_at: draft.agency_reported_at || null,
       address_text: draft.address_text.trim() || null,
-      is_public: draft.is_public,
+      is_public: ticket.status === 'arkib' ? false : draft.is_public,
     };
     const { error: updateError } = await supabase.from('tickets').update(patch).eq('id', ticket.id);
     setSaving(false);
@@ -300,23 +338,29 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
       return;
     }
     setTicket({ ...ticket, ...patch });
+    if (patch.is_public === false) setDraft({ ...draft, is_public: false });
     onChanged();
   }
 
-  async function deleteCase() {
+  async function archiveCase() {
     if (!canAdmin || !ticket) return;
     const ok = window.confirm(
-      `Padam kes ${ticket.ticket_number}? Ini tidak boleh dibuat asal semula.`,
+      `Arkib kes ${ticket.ticket_number}? Ia akan disembunyikan dari peta awam. Anda boleh tukar status semula kemudian.`,
     );
     if (!ok) return;
     setSaving(true);
     setError(null);
-    const { error: deleteError } = await supabase.from('tickets').delete().eq('id', ticket.id);
+    const { error: archiveError } = await supabase
+      .from('tickets')
+      .update({ status: 'arkib', is_public: false })
+      .eq('id', ticket.id);
     setSaving(false);
-    if (deleteError) {
-      setError(deleteError.message);
+    if (archiveError) {
+      setError(archiveError.message);
       return;
     }
+    setTicket({ ...ticket, status: 'arkib', is_public: false });
+    if (draft) setDraft({ ...draft, is_public: false });
     onChanged();
     onClose();
   }
@@ -438,12 +482,14 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
   async function savePin() {
     if (!canEdit || !ticket || !pendingPin) return;
     setSaving(true);
+    const address = pendingAddress.trim() || null;
     const { error: updateError } = await supabase
       .from('tickets')
       .update({
         latitude: pendingPin[0],
         longitude: pendingPin[1],
         location_source: 'staff',
+        address_text: address,
       })
       .eq('id', ticket.id);
     setSaving(false);
@@ -451,6 +497,7 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
       setError(updateError.message);
       return;
     }
+    if (draft) setDraft({ ...draft, address_text: address ?? '' });
     await load();
     onChanged();
   }
@@ -663,10 +710,10 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
                     <button
                       type="button"
                       className="btn btn--danger"
-                      disabled={saving}
-                      onClick={() => void deleteCase()}
+                      disabled={saving || ticket.status === 'arkib'}
+                      onClick={() => void archiveCase()}
                     >
-                      Delete case
+                      {ticket.status === 'arkib' ? 'Already archived' : 'Archive case'}
                     </button>
                   </div>
                 </form>
@@ -698,7 +745,16 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
                 {ticket.location_source === 'geocoded' && (
                   <p className="location-flag location-flag--verify">Geocoded location requires staff confirmation.</p>
                 )}
-                <p className="case-help">Click the map to place the pin, then save.</p>
+                <p className="case-help">Click the map to place the pin, edit the address if needed, then save.</p>
+                <label className="case-location-address">
+                  Address
+                  <input
+                    value={pendingAddress}
+                    onChange={(event) => setPendingAddress(event.target.value)}
+                    placeholder="Street, taman, landmark…"
+                    disabled={saving}
+                  />
+                </label>
                 <div className="case-location-map">
                   <MapContainer key={ticket.id} center={mapCenter} zoom={16} style={{ height: '100%', width: '100%' }}>
                     <TileLayer
@@ -755,6 +811,11 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
             {canEdit && (
               <section className="case-section">
                 <h3>WhatsApp conversation</h3>
+                <p className="case-help">
+                  Messages appear automatically when the WhatsApp bot chats with this phone number.
+                  Staff cannot type WhatsApp messages here — use Remarks for internal notes.
+                  The case phone must match the resident&apos;s WhatsApp number.
+                </p>
                 <div className="conversation-thread">
                   {messages.map((message) => (
                     <article key={message.id} className={`conversation-message conversation-message--${message.direction}`}>
@@ -762,7 +823,35 @@ function CaseDrawer({ ticketId, profile, onClose, onChanged }: CaseDrawerProps) 
                       <small>{new Date(message.created_at).toLocaleString()}</small>
                     </article>
                   ))}
-                  {messages.length === 0 && <p className="status-text">No logged messages.</p>}
+                  {messages.length === 0 && (
+                    <p className="status-text">
+                      {('contact_number' in ticket && ticket.contact_number)
+                        ? 'No logged WhatsApp messages for this phone yet.'
+                        : 'No phone on this case — add a contact number to link WhatsApp history.'}
+                    </p>
+                  )}
+                </div>
+              </section>
+            )}
+
+            {canEdit && (
+              <section className="case-section">
+                <h3>Edit log</h3>
+                <p className="case-help">Automatic record of field changes on this case.</p>
+                <div className="case-thread edit-log">
+                  {editLog.map((entry) => (
+                    <article key={entry.id}>
+                      <p>
+                        <strong>{EDIT_FIELD_LABELS[entry.field_name] ?? entry.field_name}</strong>
+                        {': '}
+                        {formatEditValue(entry.old_value)}
+                        {' → '}
+                        {formatEditValue(entry.new_value)}
+                      </p>
+                      <small>{entry.actor_name} · {new Date(entry.created_at).toLocaleString()}</small>
+                    </article>
+                  ))}
+                  {editLog.length === 0 && <p className="status-text">No edits logged yet.</p>}
                 </div>
               </section>
             )}

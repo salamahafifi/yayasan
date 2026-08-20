@@ -240,6 +240,71 @@ body,
   border-radius: 8px;
 }
 
+.donations-page__title {
+  margin: 0 0 8px;
+  font: 700 1.5rem/1.25 var(--font-cabinet, var(--font-ui));
+  color: var(--color-primary-blue);
+}
+
+.donations-page__intro {
+  margin: 0 0 20px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.donations-page__section {
+  margin: 0 0 20px;
+}
+
+.donations-page__section h2 {
+  margin: 0 0 10px;
+  font: 700 1rem/1.3 var(--font-ui);
+  color: var(--color-text);
+}
+
+.donations-page__details {
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.donations-page__details > div {
+  display: grid;
+  gap: 2px;
+}
+
+.donations-page__details dt {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.donations-page__details dd {
+  margin: 0;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.donations-page__qr {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.donations-page__qr img {
+  width: min(280px, 100%);
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.donations-page__note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+
 /* One typeface and one size across the whole footer, matching the body text
    used everywhere above it. Rank is carried by colour, not by size, so the
    block reads as a single unit instead of five competing ones. */

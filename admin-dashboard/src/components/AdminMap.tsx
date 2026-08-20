@@ -26,6 +26,7 @@ const STATUS_COLORS: Record<TicketStatus, string> = {
   majlis_perbandaran: '#7C3AED',
   selesai: '#15803D',
   tangguh: '#57534E',
+  arkib: '#9CA3AF',
 };
 
 type AdminMapProps = {

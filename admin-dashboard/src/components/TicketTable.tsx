@@ -12,7 +12,14 @@ import {
   type TicketStatus,
 } from '../types/database';
 
-const STATUS_OPTIONS: TicketStatus[] = ['baru', 'siasat', 'majlis_perbandaran', 'selesai', 'tangguh'];
+const STATUS_OPTIONS: TicketStatus[] = [
+  'baru',
+  'siasat',
+  'majlis_perbandaran',
+  'selesai',
+  'tangguh',
+  'arkib',
+];
 const CATEGORY_OPTIONS: IssueCategory[] = [
   'jalan_berlubang',
   'lampu_jalan',
@@ -44,6 +51,7 @@ function TicketTable({ role, refreshKey, onSelect }: TicketTableProps) {
   const [tickets, setTickets] = useState<TicketRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [ticketSearch, setTicketSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<TicketStatus | 'all'>('all');
   const [categoryFilter, setCategoryFilter] = useState<IssueCategory | 'all'>('all');
   const [locationFilter, setLocationFilter] = useState<LocationFilter>('all');
@@ -74,28 +82,39 @@ function TicketTable({ role, refreshKey, onSelect }: TicketTableProps) {
     };
   }, [canSeePii, refreshKey]);
 
-  const sortedTickets = useMemo(
-    () =>
-      tickets.filter((ticket) => {
+  const sortedTickets = useMemo(() => {
+    const query = ticketSearch.trim().toLowerCase();
+    return tickets
+      .filter((ticket) => {
+        if (query && !ticket.ticket_number.toLowerCase().includes(query)) return false;
         if (statusFilter !== 'all' && ticket.status !== statusFilter) return false;
         if (categoryFilter !== 'all' && ticket.category !== categoryFilter) return false;
         if (locationFilter === 'missing' && !ticket.needs_location) return false;
         if (locationFilter === 'geocoded' && ticket.location_source !== 'geocoded') return false;
         return true;
-      }).sort((a, b) => {
+      })
+      .sort((a, b) => {
         const first = daysForRow(a);
         const second = daysForRow(b);
         if (first == null && second == null) return 0;
         if (first == null) return 1;
         if (second == null) return -1;
         return second - first;
-      }),
-    [tickets, statusFilter, categoryFilter, locationFilter],
-  );
+      });
+  }, [tickets, ticketSearch, statusFilter, categoryFilter, locationFilter]);
 
   return (
     <section className="ticket-table-wrapper">
       <div className="ticket-table__filters">
+        <label className="ticket-table__search">
+          Ticket
+          <input
+            type="search"
+            value={ticketSearch}
+            placeholder="Search ticket number"
+            onChange={(event) => setTicketSearch(event.target.value)}
+          />
+        </label>
         <label>
           Status
           <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as TicketStatus | 'all')}>
@@ -139,6 +158,7 @@ function TicketTable({ role, refreshKey, onSelect }: TicketTableProps) {
                 <th>Ticket</th>
                 <th>Category</th>
                 <th>Status</th>
+                <th>On map</th>
                 <th>Priority</th>
                 {canSeePii && <th>Reporter</th>}
                 <th>Reported</th>
@@ -161,6 +181,7 @@ function TicketTable({ role, refreshKey, onSelect }: TicketTableProps) {
                   <td>{ticket.ticket_number}</td>
                   <td>{CATEGORY_LABELS[ticket.category]}</td>
                   <td>{STATUS_LABELS[ticket.status]}</td>
+                  <td>{ticket.is_public ? 'Yes' : 'No'}</td>
                   <td>{PRIORITY_LABELS[ticket.adun_priority]}</td>
                   {canSeePii && (
                     <td>

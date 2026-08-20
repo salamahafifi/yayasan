@@ -26,6 +26,7 @@ export const STATUS_LABELS: Record<TicketStatus, string> = {
   majlis_perbandaran: 'Majlis Perbandaran',
   selesai: 'Selesai',
   tangguh: 'Tangguh',
+  arkib: 'Arkib',
 };
 
 export function formatCategory(category: string): string {

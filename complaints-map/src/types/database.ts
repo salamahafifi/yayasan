@@ -1,4 +1,4 @@
-export type TicketStatus = 'baru' | 'siasat' | 'majlis_perbandaran' | 'selesai' | 'tangguh';
+export type TicketStatus = 'baru' | 'siasat' | 'majlis_perbandaran' | 'selesai' | 'tangguh' | 'arkib';
 
 export type IssueCategory =
   | 'jalan_berlubang'

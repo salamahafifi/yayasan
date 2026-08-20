@@ -6,7 +6,32 @@ export const STATUS_LABELS: Record<TicketStatus, string> = {
   majlis_perbandaran: 'Majlis Perbandaran',
   selesai: 'Selesai',
   tangguh: 'Tangguh',
+  arkib: 'Arkib',
 };
+
+export const EDIT_FIELD_LABELS: Record<string, string> = {
+  status: 'Status',
+  assigned_to: 'Assignee',
+  name: 'Name',
+  contact_number: 'Phone',
+  description: 'Description',
+  category: 'Category',
+  adun_priority: 'Priority',
+  agency: 'Agency',
+  agency_ref: 'Agency ref',
+  agency_reported_at: 'Agency date',
+  address_text: 'Address',
+  is_public: 'On public map',
+  location: 'Map pin',
+  location_source: 'Location source',
+};
+
+export function formatEditValue(value: string | null): string {
+  if (value == null || value === '') return '—';
+  if (value === 'true') return 'Yes';
+  if (value === 'false') return 'No';
+  return value;
+}
 
 export const CATEGORY_LABELS: Record<IssueCategory, string> = {
   jalan_berlubang: 'Jalan & perabot jalan',

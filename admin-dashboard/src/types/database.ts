@@ -7,7 +7,7 @@ export type IssueCategory =
   | 'gangguan_haiwan'
   | 'lain_lain';
 
-export type TicketStatus = 'baru' | 'siasat' | 'majlis_perbandaran' | 'selesai' | 'tangguh';
+export type TicketStatus = 'baru' | 'siasat' | 'majlis_perbandaran' | 'selesai' | 'tangguh' | 'arkib';
 
 export type PriorityLevel = 'rendah' | 'biasa' | 'tinggi' | 'kritikal';
 
@@ -119,6 +119,17 @@ export type WhatsAppMessage = {
   direction: 'inbound' | 'outbound';
   body: string | null;
   media_type: string | null;
+  created_at: string;
+};
+
+export type TicketEditLogEntry = {
+  id: number;
+  ticket_id: number;
+  actor_id: string | null;
+  actor_name: string;
+  field_name: string;
+  old_value: string | null;
+  new_value: string | null;
   created_at: string;
 };
 

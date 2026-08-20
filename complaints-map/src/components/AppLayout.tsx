@@ -71,6 +71,12 @@ export default function AppLayout() {
               >
                 {t(lang, 'semakStatus')}
               </Link>
+              <Link
+                to="/sumbangan"
+                className="app-header__cta app-header__cta--outline"
+              >
+                {t(lang, 'donationsNav')}
+              </Link>
             </>
           )}
           <div className="lang-toggle" role="group" aria-label={t(lang, 'language')}>
@@ -102,6 +108,7 @@ export default function AppLayout() {
         <footer className="app-footer">
           <p className="app-footer__managed">{t(lang, 'managedBy')}</p>
           <nav className="app-footer__links" aria-label="Legal">
+            <Link to="/sumbangan">{t(lang, 'donationsNav')}</Link>
             <a href="/privacy">{t(lang, 'privacy')}</a>
             <a href="/terms">{t(lang, 'terms')}</a>
             <a href="/data-deletion">{t(lang, 'dataDeletion')}</a>
