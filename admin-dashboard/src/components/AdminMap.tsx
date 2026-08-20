@@ -11,13 +11,16 @@ import {
   type Ticket,
   type TicketStatus,
 } from '../types/database';
-import BoundaryOverlay from './BoundaryOverlay';
+import BoundaryOverlay, {
+  KEMPAS_BOUNDARY_COLOR,
+  PERLING_BOUNDARY_COLOR,
+} from './BoundaryOverlay';
 
-const MAP_CENTER: [number, number] = [1.528, 103.705];
-const MAP_ZOOM = 14;
+const MAP_CENTER: [number, number] = [1.508, 103.702];
+const MAP_ZOOM = 13;
 const MAP_MAX_BOUNDS: [[number, number], [number, number]] = [
-  [1.485, 103.66],
-  [1.57, 103.75],
+  [1.45, 103.63],
+  [1.565, 103.76],
 ];
 
 const STATUS_COLORS: Record<TicketStatus, string> = {
@@ -86,7 +89,7 @@ function AdminMap({ role, refreshKey, onSelect }: AdminMapProps) {
         <MapContainer
           center={MAP_CENTER}
           zoom={MAP_ZOOM}
-          minZoom={13}
+          minZoom={12}
           maxBounds={MAP_MAX_BOUNDS}
           maxBoundsViscosity={1}
           style={{ height: '100%', width: '100%' }}
@@ -121,6 +124,15 @@ function AdminMap({ role, refreshKey, onSelect }: AdminMapProps) {
         </MapContainer>
       </div>
       <ul className="admin-map__legend">
+        <li>
+          <span style={{ background: KEMPAS_BOUNDARY_COLOR }} />
+          DUN Kempas (N.47)
+        </li>
+        <li>
+          <span style={{ background: PERLING_BOUNDARY_COLOR }} />
+          DUN Perling (N.46)
+        </li>
+        <li className="admin-map__legend-note">Together: P.161 Pulai</li>
         {(Object.keys(STATUS_COLORS) as TicketStatus[]).map((status) => (
           <li key={status}>
             <span style={{ background: STATUS_COLORS[status] }} />

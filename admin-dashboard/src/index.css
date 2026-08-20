@@ -276,6 +276,11 @@ body,
   border-radius: 50%;
 }
 
+.admin-map__legend-note {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
 .admin-map__popup {
   display: flex;
   flex-direction: column;
