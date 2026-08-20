@@ -14,13 +14,14 @@ import {
 import BoundaryOverlay, {
   KEMPAS_BOUNDARY_COLOR,
   PERLING_BOUNDARY_COLOR,
+  PULAI_BOUNDARY_COLOR,
 } from './BoundaryOverlay';
 
-const MAP_CENTER: [number, number] = [1.508, 103.702];
-const MAP_ZOOM = 13;
+const MAP_CENTER: [number, number] = [1.50, 103.70];
+const MAP_ZOOM = 12;
 const MAP_MAX_BOUNDS: [[number, number], [number, number]] = [
-  [1.45, 103.63],
-  [1.565, 103.76],
+  [1.44, 103.61],
+  [1.57, 103.78],
 ];
 
 const STATUS_COLORS: Record<TicketStatus, string> = {
@@ -87,9 +88,10 @@ function AdminMap({ role, refreshKey, onSelect }: AdminMapProps) {
       {error && <p className="status-text status-text--error">{error}</p>}
       <div className="admin-map__canvas">
         <MapContainer
+          key="admin-pulai-map"
           center={MAP_CENTER}
           zoom={MAP_ZOOM}
-          minZoom={12}
+          minZoom={11}
           maxBounds={MAP_MAX_BOUNDS}
           maxBoundsViscosity={1}
           style={{ height: '100%', width: '100%' }}
@@ -125,6 +127,10 @@ function AdminMap({ role, refreshKey, onSelect }: AdminMapProps) {
       </div>
       <ul className="admin-map__legend">
         <li>
+          <span style={{ background: PULAI_BOUNDARY_COLOR }} />
+          P.161 Pulai
+        </li>
+        <li>
           <span style={{ background: KEMPAS_BOUNDARY_COLOR }} />
           DUN Kempas (N.47)
         </li>
@@ -132,7 +138,6 @@ function AdminMap({ role, refreshKey, onSelect }: AdminMapProps) {
           <span style={{ background: PERLING_BOUNDARY_COLOR }} />
           DUN Perling (N.46)
         </li>
-        <li className="admin-map__legend-note">Together: P.161 Pulai</li>
         {(Object.keys(STATUS_COLORS) as TicketStatus[]).map((status) => (
           <li key={status}>
             <span style={{ background: STATUS_COLORS[status] }} />
