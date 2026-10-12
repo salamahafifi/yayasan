@@ -10,6 +10,12 @@ export default function DonationsPage() {
       <div className="page-panel donations-page">
         <h1 className="donations-page__title">{t(lang, 'donationsTitle')}</h1>
         <p className="donations-page__intro">{t(lang, 'donationsIntro')}</p>
+        <p className="donations-page__intro">{t(lang, 'donationsDisclaimer')}</p>
+
+        <section className="donations-page__section" aria-labelledby="donations-where-heading">
+          <h2 id="donations-where-heading">{t(lang, 'donationsWhereHeading')}</h2>
+          <p>{t(lang, 'donationsWhereBody')}</p>
+        </section>
 
         <section className="donations-page__section" aria-labelledby="donations-bank-heading">
           <h2 id="donations-bank-heading">{t(lang, 'donationsBankHeading')}</h2>
@@ -41,7 +47,6 @@ export default function DonationsPage() {
           </figure>
         </section>
 
-        <p className="donations-page__note">{t(lang, 'donationsNote')}</p>
       </div>
     </main>
   );

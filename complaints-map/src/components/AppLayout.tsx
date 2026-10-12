@@ -12,9 +12,6 @@ export type AppOutletContext = {
 
 const LANG_STORAGE_KEY = 'aduan.lang';
 
-// Temporarily hide donate links in header and footer for all languages.
-const SHOW_DONATIONS_NAV = false;
-
 const LANG_OPTIONS: { code: Lang; label: string }[] = [
   { code: 'ms', label: 'BM' },
   { code: 'en', label: 'EN' },
@@ -39,7 +36,8 @@ function readStoredLang(): Lang {
 export default function AppLayout() {
   const [lang, setLang] = useState<Lang>(readStoredLang);
   const { pathname } = useLocation();
-  const showNavActions = !pathname.startsWith('/aduan');
+  const isLostFoodRoute = pathname.startsWith('/lost-food');
+  const showNavActions = !pathname.startsWith('/aduan') && !isLostFoodRoute;
   // Full legal footer on map/status; form routes keep a slim strip so the
   // technical-feedback link stays findable without the whole chrome.
   const isAduanRoute = pathname.startsWith('/aduan');
@@ -74,14 +72,12 @@ export default function AppLayout() {
               >
                 {t(lang, 'semakStatus')}
               </Link>
-              {SHOW_DONATIONS_NAV && (
-                <Link
-                  to="/sumbangan"
-                  className="app-header__cta app-header__cta--outline"
-                >
-                  {t(lang, 'donationsNav')}
-                </Link>
-              )}
+              <Link
+                to="/sumbangan"
+                className="app-header__cta app-header__cta--outline"
+              >
+                {t(lang, 'donationsNav')}
+              </Link>
             </>
           )}
           <div className="lang-toggle" role="group" aria-label={t(lang, 'language')}>
@@ -101,11 +97,11 @@ export default function AppLayout() {
         </div>
       </header>
 
-      <BetaBanner lang={lang} />
+      {!isLostFoodRoute && <BetaBanner lang={lang} />}
 
       <Outlet context={{ lang, setLang } satisfies AppOutletContext} />
 
-      {isAduanRoute ? (
+      {isLostFoodRoute ? null : isAduanRoute ? (
         <footer className="app-footer app-footer--compact">
           <FeedbackLink lang={lang} variant="block" />
         </footer>
@@ -113,9 +109,8 @@ export default function AppLayout() {
         <footer className="app-footer">
           <p className="app-footer__managed">{t(lang, 'managedBy')}</p>
           <nav className="app-footer__links" aria-label="Legal">
-            {SHOW_DONATIONS_NAV && (
-              <Link to="/sumbangan">{t(lang, 'donationsNav')}</Link>
-            )}
+            <Link to="/sumbangan">{t(lang, 'donationsNav')}</Link>
+            <Link to="/lost-food">{t(lang, 'lostFoodTitle')}</Link>
             <a href="/privacy">{t(lang, 'privacy')}</a>
             <a href="/terms">{t(lang, 'terms')}</a>
             <a href="/data-deletion">{t(lang, 'dataDeletion')}</a>

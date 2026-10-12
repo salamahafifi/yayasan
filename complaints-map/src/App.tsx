@@ -3,6 +3,7 @@ import AppLayout from './components/AppLayout';
 import MapPage from './pages/MapPage';
 import SemakPage from './pages/SemakPage';
 import DonationsPage from './pages/DonationsPage';
+import LostFoodMapPage from './pages/LostFoodMapPage';
 import AduanLayout, { AduanIndexRedirect, AduanStepPage } from './pages/AduanPage';
 import AduanSuccessPage from './pages/aduan/AduanSuccessPage';
 
@@ -14,6 +15,7 @@ export default function App() {
           <Route index element={<MapPage />} />
           <Route path="semak" element={<SemakPage />} />
           <Route path="sumbangan" element={<DonationsPage />} />
+          <Route path="lost-food" element={<LostFoodMapPage />} />
           <Route path="aduan" element={<AduanLayout />}>
             <Route index element={<AduanIndexRedirect />} />
             <Route path="berjaya" element={<AduanSuccessPage />} />

@@ -17,7 +17,12 @@ const ms: StringTable = {
 
   donationsTitle: 'Sumbangan',
   donationsIntro:
-    'Terima kasih atas sokongan anda. Sumbangan membantu menyokong kerja dan khidmat Salamahafifi.',
+    'Sahkan.my diuruskan oleh Salamahafifi Solutions, sebuah pemilikan tunggal yang berdaftar dengan Suruhanjaya Syarikat Malaysia (SSM 202603191790 / PG0590830-U).',
+  donationsDisclaimer:
+    'Sahkan.my bukan pertubuhan berdaftar dan bukan badan amal. Sumbangan tidak boleh ditolak cukai dan tiada resit cukai akan dikeluarkan.',
+  donationsWhereHeading: 'Ke mana sumbangan anda digunakan',
+  donationsWhereBody:
+    'Sumbangan menanggung kos operasi perkhidmatan aduan sahaja: hos web, domain, percetakan borang dan risalah, serta perjalanan ke tapak aduan.',
   donationsBankHeading: 'Pemindahan bank',
   donationsBankName: 'Bank',
   donationsBankNameValue: 'Maybank',
@@ -206,6 +211,15 @@ const ms: StringTable = {
     'Nombor tiket ini adalah sulit. Jangan kongsi secara awam.',
   successSemakLink: 'Semak status aduan',
   successHomeLink: 'Kembali ke peta',
+
+  lostFoodEyebrow: 'The Lost Food Project · Johor',
+  lostFoodTitle: 'Laluan penyelamatan makanan',
+  lostFoodIntro:
+    'Laluan pemanduan dari pejabat Yayasan Suria ke tapak rakan kongsi dan kembali, mengikut susunan hentian. Garis putus-putus mengikuti jalan.',
+  lostFoodPartners: 'tapak rakan kongsi',
+  lostFoodCircuit: 'pusingan laluan',
+  lostFoodDrive: 'anggaran memandu',
+  lostFoodLegend: 'Garis putus-putus = laluan perjalanan',
 };
 
 const en: StringTable = {
@@ -223,7 +237,12 @@ const en: StringTable = {
 
   donationsTitle: 'Donations',
   donationsIntro:
-    'Thank you for your support. Donations help sustain Salamahafifi’s work and service.',
+    'Sahkan.my is operated by Salamahafifi Solutions, a sole proprietorship registered with the Companies Commission of Malaysia (SSM 202603191790 / PG0590830-U).',
+  donationsDisclaimer:
+    'Sahkan.my is not a registered pertubuhan and not a charity. Contributions are not tax-deductible and no tax receipt will be issued.',
+  donationsWhereHeading: 'Where your contribution goes',
+  donationsWhereBody:
+    'Contributions cover the running costs of the aduan service only: web hosting, domain, printing of forms and leaflets, and travel to complaint sites.',
   donationsBankHeading: 'Bank transfer',
   donationsBankName: 'Bank',
   donationsBankNameValue: 'Maybank',
@@ -412,6 +431,15 @@ const en: StringTable = {
     'This ticket number is private. Do not share it publicly.',
   successSemakLink: 'Check complaint status',
   successHomeLink: 'Back to map',
+
+  lostFoodEyebrow: 'The Lost Food Project · Johor',
+  lostFoodTitle: 'Food rescue route',
+  lostFoodIntro:
+    'Driving path from Yayasan Suria office to each partner site and back, in stop order. Dotted lines follow the roads.',
+  lostFoodPartners: 'partner sites',
+  lostFoodCircuit: 'route circuit',
+  lostFoodDrive: 'estimated drive',
+  lostFoodLegend: 'Dotted line = travel route',
 };
 
 const zh: StringTable = {
@@ -428,7 +456,13 @@ const zh: StringTable = {
   footerMeta: 'Salamahafifi Solutions · SSM 202603191790 (PG0590830-U) · admin@sahkan.my',
 
   donationsTitle: '捐款',
-  donationsIntro: '感谢您的支持。捐款有助于支持 Salamahafifi 的工作与服务。',
+  donationsIntro:
+    'Sahkan.my 由 Salamahafifi Solutions 营运。这是在马来西亚公司委员会注册的独资企业（SSM 202603191790 / PG0590830-U）。',
+  donationsDisclaimer:
+    'Sahkan.my 不是注册社团，也不是慈善机构。捐款不可扣税，也不会开具税务收据。',
+  donationsWhereHeading: '您的捐款用于何处',
+  donationsWhereBody:
+    '捐款仅用于支付投诉服务的运营成本：网站托管、域名、表格与传单印刷，以及前往投诉地点的交通费用。',
   donationsBankHeading: '银行转账',
   donationsBankName: '银行',
   donationsBankNameValue: 'Maybank',
@@ -609,6 +643,14 @@ const zh: StringTable = {
   successPrivateHint: '此编号属私人资料，请勿公开分享。',
   successSemakLink: '查询投诉进度',
   successHomeLink: '返回地图',
+
+  lostFoodEyebrow: 'The Lost Food Project · Johor',
+  lostFoodTitle: '食物救援路线',
+  lostFoodIntro: '从 Yayasan Suria 办事处依站点顺序前往各合作点并返回。虚线沿实际道路绘制。',
+  lostFoodPartners: '合作地点',
+  lostFoodCircuit: '整圈路程',
+  lostFoodDrive: '预估车程',
+  lostFoodLegend: '虚线 = 行驶路线',
 };
 
 const ta: StringTable = {
@@ -626,7 +668,12 @@ const ta: StringTable = {
 
   donationsTitle: 'நன்கொடை',
   donationsIntro:
-    'உங்கள் ஆதரவுக்கு நன்றி. நன்கொடைகள் Salamahafifi-யின் பணியையும் சேவையையும் தொடர உதவும்.',
+    'Sahkan.my, மலேசிய நிறுவனங்கள் ஆணையத்தில் பதிவு செய்யப்பட்ட தனி உரிமையாளர் நிறுவனமான Salamahafifi Solutions ஆல் இயக்கப்படுகிறது (SSM 202603191790 / PG0590830-U).',
+  donationsDisclaimer:
+    'Sahkan.my பதிவு செய்யப்பட்ட சங்கமோ தொண்டு நிறுவனமோ அல்ல. பங்களிப்புகள் வரி விலக்கு பெறாது, வரி ரசீதும் வழங்கப்படாது.',
+  donationsWhereHeading: 'உங்கள் பங்களிப்பு எங்கே செல்கிறது',
+  donationsWhereBody:
+    'பங்களிப்புகள் அடுவான் சேவையின் இயக்கச் செலவுகளுக்கு மட்டுமே பயன்படும்: இணைய ஹோஸ்டிங், டொமைன், படிவங்கள் மற்றும் துண்டுப் பிரசுரங்கள் அச்சிடுதல், மற்றும் புகார் இடங்களுக்குச் செல்லும் பயணம்.',
   donationsBankHeading: 'வங்கி பரிமாற்றம்',
   donationsBankName: 'வங்கி',
   donationsBankNameValue: 'Maybank',
@@ -808,6 +855,15 @@ const ta: StringTable = {
   successPrivateHint: 'இந்த டிக்கெட் எண் தனிப்பட்டது. பொதுவில் பகிர வேண்டாம்.',
   successSemakLink: 'புகார் நிலையைப் பார்க்க',
   successHomeLink: 'வரைபடத்திற்குத் திரும்பு',
+
+  lostFoodEyebrow: 'The Lost Food Project · Johor',
+  lostFoodTitle: 'உணவு மீட்பு வழி',
+  lostFoodIntro:
+    'Yayasan Suria அலுவலகத்திலிருந்து ஒவ்வொரு கூட்டாளர் இடத்திற்கும் திரும்பி வரும் ஓட்டுப் பாதை, நிறுத்த வரிசையில். புள்ளிக் கோடுகள் சாலைகளைப் பின்பற்றுகின்றன.',
+  lostFoodPartners: 'கூட்டாளர் இடங்கள்',
+  lostFoodCircuit: 'வழி சுற்று',
+  lostFoodDrive: 'மதிப்பீட்டு பயணம்',
+  lostFoodLegend: 'புள்ளிக் கோடு = பயண வழி',
 };
 
 export const strings: Record<Lang, StringTable> = {
